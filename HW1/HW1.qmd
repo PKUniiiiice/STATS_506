@@ -1,0 +1,35 @@
+---
+title: "STATS 506 HW1"
+author: "Minxuan Chen"
+date: last-modified
+format:
+  pdf:
+    toc: true
+    number-sections: true
+    colorlinks: true
+  html:
+    toc: true
+    css: styles.css
+    fig-align: "center"
+    fig-width: 8
+    fig-height: 6
+    embed-resources: true
+    format-links: false
+code-fold: show
+code-overflow: wrap
+code-line-numbers: true
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+1 + 1
+```
+
+
