@@ -15,21 +15,116 @@ format:
     fig-height: 6
     embed-resources: true
     format-links: false
+    execute:
+      warning: true
+      freeze: auto
 code-fold: show
-code-overflow: wrap
+code-overflow: scroll
 code-line-numbers: true
 ---
 
-## Quarto
+## Problem 1 Wine data
+### a
+```{r p1a}
+wine.data <- read.table("./wine.data", sep=",", header=FALSE,
+                        col.name=c(
+        "class", "Alcohol", "Malic acid", "Ash",
+	      "Alcalinity_of_ash", "Magnesium", "Total_phenols",
+ 	      "Flavanoids", "Nonflavanoid_phenols", "Proanthocyanins",
+	      "Color_intensity","Hue", "OD280_OD315_of_diluted_wines",
+ 	      "Proline" ))
+head(wine.data)
+```
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+### b
+`wine.names` reports that  
 
-## Running Code
+> 9. Class Distribution: number of instances per class  
+  class 1 59  
+	class 2 71  
+	class 3 48  
 
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+In our dataframe
+```{r p1b}
+wine.data$class <- as.factor(wine.data$class)
+summary(wine.data$class)
+```
 
-```{r}
-1 + 1
+### c
+```{r p1c}
+# 1
+wine.data[which.max(wine.data$Alcohol) ,1]
+# 2
+wine.data[which.min(wine.data$Alcohol) ,1]
+# 3
+sum((wine.data$Magnesium>114))
+# 4
+tapply((wine.data$Magnesium>114), wine.data$class, FUN=sum)
+```
+
+### d
+```{r p14}
+all.tab <- c(class=NA, colMeans(wine.data[, -1]))
+class.tab <- aggregate(.~class, wine.data, mean)
+out.tab <- rbind(all.tab, class.tab)
+rownames(out.tab) <- c("overall", "class 1", "class 2", "class 3")
+out.tab[, -1]
+```
+
+### e
+We'd like to treat this as a multiple comparisons problem. Use Bonferroni correction
+```{r p1e}
+pairwise.t.test(wine.data$Ash, wine.data$class, p.adjust.method="bonferroni")
+```
+Based on the output, with an overall $\alpha$ level of 0.05, the level of Ash is not all equal across the three classes. Furthermore, we can observe significant differences between class 1 and 2, as well as between class 2 and 3. However, there is no significant difference between class 1 and 3.
+
+Implement manually:
+```{R p1ee}
+var.tab <- aggregate(Ash~class, wine.data, FUN=var)
+idx <- list(c(1, 2), c(1, 3), c(2, 3))
+cls.nb <- c(59, 71, 48)
+sd.pool <- sqrt(sum((cls.nb-1)*var.tab$Ash)/(sum(cls.nb)-3))
+p.values <- seq(3)
+for (i in seq(3)){
+  i1 <- idx[[i]][1]
+  i2 <- idx[[i]][2]
+  p.values[i] <- 2*(1-pt(abs(out.tab[i1+1, 4]-out.tab[i2+1, 4])/
+                    (sqrt(1/cls.nb[i1]+1/cls.nb[i2])*sd.pool), 
+                df=sum(cls.nb)-3))
+}
+p.values
+```
+Please note that these p-values are unadjusted, and multiplying them by 3 will yield the Bonferroni-corrected result (R output). Thus, we obtain the same and correct result through manual calculation.
+
+## Problem 2 Perfect Powers
+### a
+```{r p2a}
+isPerfectPower <- function(number, p){
+    maxroot <- floor(number^(1/p))
+    roots <- abs(seq(0,maxroot)^p-number) < sqrt(.Machine$double.eps)
+    id <- which.max(roots)
+    if (sum(roots)==0)
+        return(list(isPerfect=FALSE, root=number^(1/p)))
+    return(list(isPerfect=TRUE, root=id-1))
+    
+}
+isPerfectPower(27, p=2)
+```
+### b
+```{r p2b}
+findRootPower <- function(number){
+  maxpower <- ceiling(log2(number))
+  for (i in 2:maxpower){
+    res <- isPerfectPower(number, p=i)
+    if (res$isPerfect)
+      return (paste(number," = ", res$root, "^", i))
+  }
+  return ("Not a perfect power")
+}
+for (i in c(27, 13060694016, 7776, 170859375, 58247422, 94143178827)){
+  print(i)
+  print(findRootPower(i))
+}
 ```
 
 
