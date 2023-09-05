@@ -428,6 +428,7 @@ We use the code in part c ([-@sec-code]) to analyse the errors.
       return("Straight Flush")
      }
    ```
+   
 Revised :
 ```{r p3e}
 # (Function to identify the poker hand)
