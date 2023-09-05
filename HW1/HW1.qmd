@@ -98,15 +98,17 @@ p.values
 Please note that these p-values are unadjusted, and multiplying them by 3 will yield the Bonferroni-corrected result (R output). Thus, we obtain the same and correct result through manual calculation.
 
 ## Problem 2 Perfect Powers
+Here, we use the definition of perfect power from [wikipedia](https://en.wikipedia.org/wiki/Perfect_power), which requires
+$$r>1 \text{ and } p>1$$
 ### a
 ```{r p2a}
 isPerfectPower <- function(number, p){
     maxroot <- ceiling(number^(1/p))
-    roots <- abs(seq(0,maxroot)^p-number) < sqrt(.Machine$double.eps)
+    roots <- abs(seq(2,maxroot)^p-number) < sqrt(.Machine$double.eps)
     id <- which.max(roots)
     if (sum(roots)==0)
         return(list(isPerfect=FALSE, root=number^(1/p)))
-    return(list(isPerfect=TRUE, root=id-1))
+    return(list(isPerfect=TRUE, root=id+1))
     
 }
 isPerfectPower(27, p=2)
@@ -114,7 +116,11 @@ isPerfectPower(27, p=2)
 ### b
 ```{r p2b}
 findRootPower <- function(number){
+
   maxpower <- ceiling(log2(number))
+  if (maxpower<2){
+    return ("Not a perfect power")
+  }
   for (i in 2:maxpower){
     res <- isPerfectPower(number, p=i)
     if (res$isPerfect)

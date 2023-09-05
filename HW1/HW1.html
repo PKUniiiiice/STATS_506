@@ -3146,12 +3146,11 @@ return!"\t\n\x0B\f\r                　\u2028\u2029
   </ul></li>
   <li><a href="#problem-2-perfect-powers" id="toc-problem-2-perfect-powers" class="nav-link" data-scroll-target="#problem-2-perfect-powers">Problem 2 Perfect Powers</a>
   <ul class="collapse">
-  <li><a href="#a-1" id="toc-a-1" class="nav-link" data-scroll-target="#a-1">a</a></li>
   <li><a href="#b-1" id="toc-b-1" class="nav-link" data-scroll-target="#b-1">b</a></li>
   </ul></li>
   <li><a href="#problem-3-chatgpt" id="toc-problem-3-chatgpt" class="nav-link" data-scroll-target="#problem-3-chatgpt">Problem 3 ChatGPT</a>
   <ul class="collapse">
-  <li><a href="#a-2" id="toc-a-2" class="nav-link" data-scroll-target="#a-2">a</a></li>
+  <li><a href="#a-1" id="toc-a-1" class="nav-link" data-scroll-target="#a-1">a</a></li>
   <li><a href="#b-2" id="toc-b-2" class="nav-link" data-scroll-target="#b-2">b</a></li>
   <li><a href="#sec-code" id="toc-sec-code" class="nav-link" data-scroll-target="#sec-code">c</a></li>
   <li><a href="#d-1" id="toc-d-1" class="nav-link" data-scroll-target="#d-1">d</a></li>
@@ -3376,18 +3375,17 @@ P value adjustment method: bonferroni </code></pre>
 </section>
 <section id="problem-2-perfect-powers" class="level2">
 <h2 class="anchored" data-anchor-id="problem-2-perfect-powers">Problem 2 Perfect Powers</h2>
-<section id="a-1" class="level3">
-<h3 class="anchored" data-anchor-id="a-1">a</h3>
+<p>Here, we use the definition of perfect power from <a href="https://en.wikipedia.org/wiki/Perfect_power">wikipedia</a>, which requires <span class="math display">\[r&gt;1 \text{ and } p&gt;1\]</span> ### a</p>
 <div class="cell">
 <details open>
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1"></a>isPerfectPower <span class="ot">&lt;-</span> <span class="cf">function</span>(number, p){</span>
 <span id="cb19-2"><a href="#cb19-2"></a>    maxroot <span class="ot">&lt;-</span> <span class="fu">ceiling</span>(number<span class="sc">^</span>(<span class="dv">1</span><span class="sc">/</span>p))</span>
-<span id="cb19-3"><a href="#cb19-3"></a>    roots <span class="ot">&lt;-</span> <span class="fu">abs</span>(<span class="fu">seq</span>(<span class="dv">0</span>,maxroot)<span class="sc">^</span>p<span class="sc">-</span>number) <span class="sc">&lt;</span> <span class="fu">sqrt</span>(.Machine<span class="sc">$</span>double.eps)</span>
+<span id="cb19-3"><a href="#cb19-3"></a>    roots <span class="ot">&lt;-</span> <span class="fu">abs</span>(<span class="fu">seq</span>(<span class="dv">2</span>,maxroot)<span class="sc">^</span>p<span class="sc">-</span>number) <span class="sc">&lt;</span> <span class="fu">sqrt</span>(.Machine<span class="sc">$</span>double.eps)</span>
 <span id="cb19-4"><a href="#cb19-4"></a>    id <span class="ot">&lt;-</span> <span class="fu">which.max</span>(roots)</span>
 <span id="cb19-5"><a href="#cb19-5"></a>    <span class="cf">if</span> (<span class="fu">sum</span>(roots)<span class="sc">==</span><span class="dv">0</span>)</span>
 <span id="cb19-6"><a href="#cb19-6"></a>        <span class="fu">return</span>(<span class="fu">list</span>(<span class="at">isPerfect=</span><span class="cn">FALSE</span>, <span class="at">root=</span>number<span class="sc">^</span>(<span class="dv">1</span><span class="sc">/</span>p)))</span>
-<span id="cb19-7"><a href="#cb19-7"></a>    <span class="fu">return</span>(<span class="fu">list</span>(<span class="at">isPerfect=</span><span class="cn">TRUE</span>, <span class="at">root=</span>id<span class="dv">-1</span>))</span>
+<span id="cb19-7"><a href="#cb19-7"></a>    <span class="fu">return</span>(<span class="fu">list</span>(<span class="at">isPerfect=</span><span class="cn">TRUE</span>, <span class="at">root=</span>id<span class="sc">+</span><span class="dv">1</span>))</span>
 <span id="cb19-8"><a href="#cb19-8"></a>    </span>
 <span id="cb19-9"><a href="#cb19-9"></a>}</span>
 <span id="cb19-10"><a href="#cb19-10"></a><span class="fu">isPerfectPower</span>(<span class="dv">27</span>, <span class="at">p=</span><span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -3400,25 +3398,28 @@ $root
 [1] 5.196152</code></pre>
 </div>
 </div>
-</section>
 <section id="b-1" class="level3">
 <h3 class="anchored" data-anchor-id="b-1">b</h3>
 <div class="cell">
 <details open>
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1"></a>findRootPower <span class="ot">&lt;-</span> <span class="cf">function</span>(number){</span>
-<span id="cb21-2"><a href="#cb21-2"></a>  maxpower <span class="ot">&lt;-</span> <span class="fu">ceiling</span>(<span class="fu">log2</span>(number))</span>
-<span id="cb21-3"><a href="#cb21-3"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>maxpower){</span>
-<span id="cb21-4"><a href="#cb21-4"></a>    res <span class="ot">&lt;-</span> <span class="fu">isPerfectPower</span>(number, <span class="at">p=</span>i)</span>
-<span id="cb21-5"><a href="#cb21-5"></a>    <span class="cf">if</span> (res<span class="sc">$</span>isPerfect)</span>
-<span id="cb21-6"><a href="#cb21-6"></a>      <span class="fu">return</span> (<span class="fu">paste</span>(number,<span class="st">&quot; = &quot;</span>, res<span class="sc">$</span>root, <span class="st">&quot;^&quot;</span>, i))</span>
-<span id="cb21-7"><a href="#cb21-7"></a>  }</span>
-<span id="cb21-8"><a href="#cb21-8"></a>  <span class="fu">return</span> (<span class="st">&quot;Not a perfect power&quot;</span>)</span>
-<span id="cb21-9"><a href="#cb21-9"></a>}</span>
-<span id="cb21-10"><a href="#cb21-10"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">c</span>(<span class="dv">27</span>, <span class="dv">13060694016</span>, <span class="dv">7776</span>, <span class="dv">170859375</span>, <span class="dv">58247422</span>, <span class="dv">94143178827</span>)){</span>
-<span id="cb21-11"><a href="#cb21-11"></a>  <span class="fu">print</span>(i)</span>
-<span id="cb21-12"><a href="#cb21-12"></a>  <span class="fu">print</span>(<span class="fu">findRootPower</span>(i))</span>
-<span id="cb21-13"><a href="#cb21-13"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb21-2"><a href="#cb21-2"></a></span>
+<span id="cb21-3"><a href="#cb21-3"></a>  maxpower <span class="ot">&lt;-</span> <span class="fu">ceiling</span>(<span class="fu">log2</span>(number))</span>
+<span id="cb21-4"><a href="#cb21-4"></a>  <span class="cf">if</span> (maxpower<span class="sc">&lt;</span><span class="dv">2</span>){</span>
+<span id="cb21-5"><a href="#cb21-5"></a>    <span class="fu">return</span> (<span class="st">&quot;Not a perfect power&quot;</span>)</span>
+<span id="cb21-6"><a href="#cb21-6"></a>  }</span>
+<span id="cb21-7"><a href="#cb21-7"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>maxpower){</span>
+<span id="cb21-8"><a href="#cb21-8"></a>    res <span class="ot">&lt;-</span> <span class="fu">isPerfectPower</span>(number, <span class="at">p=</span>i)</span>
+<span id="cb21-9"><a href="#cb21-9"></a>    <span class="cf">if</span> (res<span class="sc">$</span>isPerfect)</span>
+<span id="cb21-10"><a href="#cb21-10"></a>      <span class="fu">return</span> (<span class="fu">paste</span>(number,<span class="st">&quot; = &quot;</span>, res<span class="sc">$</span>root, <span class="st">&quot;^&quot;</span>, i))</span>
+<span id="cb21-11"><a href="#cb21-11"></a>  }</span>
+<span id="cb21-12"><a href="#cb21-12"></a>  <span class="fu">return</span> (<span class="st">&quot;Not a perfect power&quot;</span>)</span>
+<span id="cb21-13"><a href="#cb21-13"></a>}</span>
+<span id="cb21-14"><a href="#cb21-14"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">c</span>(<span class="dv">27</span>, <span class="dv">13060694016</span>, <span class="dv">7776</span>, <span class="dv">170859375</span>, <span class="dv">58247422</span>, <span class="dv">94143178827</span>)){</span>
+<span id="cb21-15"><a href="#cb21-15"></a>  <span class="fu">print</span>(i)</span>
+<span id="cb21-16"><a href="#cb21-16"></a>  <span class="fu">print</span>(<span class="fu">findRootPower</span>(i))</span>
+<span id="cb21-17"><a href="#cb21-17"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 27
@@ -3439,8 +3440,8 @@ $root
 </section>
 <section id="problem-3-chatgpt" class="level2">
 <h2 class="anchored" data-anchor-id="problem-3-chatgpt">Problem 3 ChatGPT</h2>
-<section id="a-2" class="level3">
-<h3 class="anchored" data-anchor-id="a-2">a</h3>
+<section id="a-1" class="level3">
+<h3 class="anchored" data-anchor-id="a-1">a</h3>
 <p>GPT-3.5 output:</p>
 <blockquote class="blockquote">
 <p>Here are two R functions for your requirements. The first function, <code>identify_poker_hand</code>, takes a vector of suits and a vector of ranks representing a 5-card hand and returns the name of the hand. The second function, <code>deal_poker_round</code>, simulates dealing a round of cards in a game of poker (5 card stud) for a specified number of players, displays all the hands, and uses the first function to display the name of each hand.</p>
@@ -3802,9 +3803,9 @@ NA.2 &lt;NA&gt;   &lt;NA&gt;</code></pre>
 <span id="cb49-8"><a href="#cb49-8"></a>   <span class="fu">return</span>(<span class="st">&quot;Royal Flush&quot;</span>)</span>
 <span id="cb49-9"><a href="#cb49-9"></a>  } <span class="cf">else</span> {</span>
 <span id="cb49-10"><a href="#cb49-10"></a>   <span class="fu">return</span>(<span class="st">&quot;Straight Flush&quot;</span>)</span>
-<span id="cb49-11"><a href="#cb49-11"></a>  }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Revised :</p></li>
+<span id="cb49-11"><a href="#cb49-11"></a>  }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div></li>
 </ol>
+<p>Revised :</p>
 <div class="cell">
 <details open>
 <summary>Code</summary>
