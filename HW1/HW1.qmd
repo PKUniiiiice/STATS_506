@@ -226,7 +226,7 @@ hands_dealt <- deal_poker_round(num_players)
 
 ```
 
-From the result, the code works, but throws **Warnings** when trying to return the hand name.
+From the result, the code works, but throws **Warnings** when trying to return the hand name. We need to fix it and details can be found in part e ([-@sec-remy]).
 
 ### c {#sec-code}
 Commented codes.        
@@ -382,7 +382,7 @@ deal_poker_round <- function(num_players) {
   out[["Player 11"]]
   ```
   
-### e: Remedy
+### e: Remedy {#sec-remy}
 We use the code in part c ([-@sec-code]) to analyse the errors.
 
 1. Line 4, 5, 68, 69 and 92. Sorting `ranks` which contains numbers and strings is problematic. Additionally, sorting `ranks` and `suits` separately can disrupt the `rank-suit` pairing.
