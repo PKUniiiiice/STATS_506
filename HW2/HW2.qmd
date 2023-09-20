@@ -9,7 +9,6 @@ format:
     colorlinks: true
   html:
     toc: true
-    css: styles.css
     fig-align: "center"
     fig-width: 8
     fig-height: 6
@@ -149,7 +148,7 @@ print(ress)
 
 It's obvious that the vectorized version is the fastest, while the pure for-loop version is the slowest. This is a natural result of the fact that built-in vectorized functions are executed in compiled C or Fortran code, as opposed to much more R codes that a for-loop uses.
 
-As for the 'apply' version, it involves loop-hiding. We use `sapply`, which calls `lapply`. The later drop down to C for its loops, however, at each step in the C loop, they evaluate the R function (i.e. `money_cal`) passed in. So it is slower than vectorization but not as slow as a pure for-loop.
+As for the `apply` version, it involves loop-hiding. We use `sapply`, which calls `lapply`. The later drop down to C for its loops, however, at each step in the C loop, they evaluate the R function (i.e. `money_cal`) passed in. So it is slower than vectorization but not as slow as a pure for-loop.
 
 The table version is slightly slower than vectorization. The main reason is the conversion of the rolling result to a factor and the subsequent counting of its frequency.
 
@@ -239,9 +238,10 @@ m.inter.mpg <- lm(Highway.mpg ~ Horsepower + Torque +
 summary(m.inter.mpg)
 ```
 
-Note that the interaction term has a positive regression coefficient, so we expect that the slope of `MPG-Horsepower` line will increase with increase in Torque.
+Note that the interaction term has a positive regression coefficient, so we expect that the slope of `MPG-Horsepower` to increase with an increase in Torque.
 
-We choose the 25\%, 50\% and 75\% quantile value of Torque as three typical values to draw the interaction plot. Moreover, we fix the `Year` variables to the same value in one plot and draw 4 plots in total to reflect 4 levels of `Year`. As for other variables (all three dimensions), we use the default value given by function `interact_plot()`.
+We choose the 25\%, 50\% and 75\% percentiles of Torque as three typical values to create the interaction plot. Additionally, we fix the `Year` variable to the same value in each plot and generate a total of four plots to reflect four levels of `Year`. As for the other variables (all three dimensions), we use the default value provided by the function `interact_plot()`.
+
 
 ```{r p2d 2}
 #| fig-width: 10
@@ -277,7 +277,7 @@ grid.arrange(t1, t2, t3, t4, ncol = 2)
 
 ```
 
-Note that the difference among years is just in intercept i.e. (translation of lines), which is because `Year` and `Horsepower` have no interaction.
+Note that the difference among years lies solely in the intercept (translation of lines). This is because there is no interaction between `Year` and `Horsepower`.
 
 ### e
 We try to reproduce the results in part c and d.
@@ -308,11 +308,12 @@ cal.beta(y.cd, design.pc)
 cal.beta(y.cd, design.pd)
 ```
 
-We got the same result as `lm` did prior.
-
+We got the same results as `lm` did prior.
 
 
 ```{r}
+#| echo: false
+#| eval: false
 library(ggplot2)
 # Create a data frame with the combinations of Torque and years
 combinations <- expand.grid(Torque = c(177, 233, 333),
@@ -358,14 +359,610 @@ ggplot(plot_data, aes(x = Horsepower, y = Predicted, color = interaction(Torque,
 
 ```
 
+## Problem 3 Stata
+All answers are in the following code chunk.
+
+Interaction plot of Part d
+
+![](Graphhw2.jpg){fig-align="center"}
 
 
+```stata
+. do "K:\STATS_506\STATA\stata_hw2.Do"
 
+. //load data
+. cd "K:\STATS_506\STATA\"
+K:\STATS_506\STATA
 
+. import delimited "cars.csv", clear
+(encoding automatically selected: ISO-8859-1)
+(18 vars, 5,076 obs)
 
-## Problem 3
+. describe
 
+Contains data
+ Observations:         5,076                  
+    Variables:            18                  
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+dimensionshei~t int     %8.0g                 Dimensions.Height
+dimensionslen~h int     %8.0g                 Dimensions.Length
+dimensionswidth int     %8.0g                 Dimensions.Width
+engineinform~ne str17   %17s                  Engine Information.Driveline
+engineinform~pe str60   %60s                  Engine Information.Engine Type
+engineinform~id str4    %9s                   Engine Information.Hybrid
+engineinform~rd byte    %8.0g                 Engine Information.Number of Forward Gears
+engineinforma~n str30   %30s                  Engine Information.Transmission
+fuelinfor~tympg byte    %8.0g                 Fuel Information.City mpg
+fuelinformati~e str22   %22s                  Fuel Information.Fuel Type
+fuelinfor~aympg int     %8.0g                 Fuel Information.Highway mpg
+identificatio~n str22   %22s                  Identification.Classification
+identificatio~d str67   %67s                  Identification.ID
+identificatio~e str18   %18s                  Identification.Make
+identific~lyear str48   %48s                  Identification.Model Year
+identific~nyear int     %8.0g                 Identification.Year
+engineinforma~c int     %8.0g                 Engine Information.Engine Statistics.Horsepower
+v18             int     %8.0g                 Engine Information.Engine Statistics.Torque
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Sorted by: 
+     Note: Dataset has changed since last saved.
 
+. 
+. // Part a ------------------------------------------------------------------------------------------------------------------------
+. local oldvars "dimensionsheight dimensionslength dimensionswidth engineinformationdriveline engineinformationenginetype engineinformationhybrid engineinformationnumberofforward enginei
+> nformationtransmission fuelinformationcitympg fuelinformationfueltype fuelinformationhighwaympg identificationclassification identificationid identificationmake identificationmodelyear
+>  identificationyear engineinformationenginestatistic v18"
 
+. 
+. local newvars "Height Length Width Driveline EngineType Hybrid NofForwardGears Transmission Citympg FuelType Highwaympg Classification ID Make ModelYear Year Horsepower Torque"
 
+. 
+. //loop over the table, and change column names
+. local items : word count `oldvars'
+
+. forval i = 1/`items' {
+  2.     local old : word `i' of `oldvars'
+  3.         local new : word `i' of `newvars'
+  4.     rename `old' `new'
+  5. }
+
+. // End of Part a------------------------------------------------------------------------------------------------------------------
+. 
+. 
+. // Part b ------------------------------------------------------------------------------------------------------------------------
+. keep if FuelType == "Gasoline"
+(485 observations deleted)
+
+. // End of Part b------------------------------------------------------------------------------------------------------------------
+. 
+. 
+. // Part c ------------------------------------------------------------------------------------------------------------------------
+. regress Highwaympg Horsepower Torque Height Length Width i.Year
+
+      Source |       SS           df       MS      Number of obs   =     4,591
+-------------+----------------------------------   F(8, 4582)      =    413.35
+       Model |  70043.6695         8  8755.45869   Prob > F        =    0.0000
+    Residual |   97055.298     4,582  21.1818634   R-squared       =    0.4192
+-------------+----------------------------------   Adj R-squared   =    0.4182
+       Total |  167098.968     4,590  36.4050038   Root MSE        =    4.6024
+
+------------------------------------------------------------------------------
+  Highwaympg | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+  Horsepower |   .0163556   .0022772     7.18   0.000     .0118913      .02082
+      Torque |  -.0507425    .002203   -23.03   0.000    -.0550614   -.0464236
+      Height |   .0099079   .0011267     8.79   0.000      .007699    .0121168
+      Length |    .001729   .0008836     1.96   0.050    -3.36e-06    .0034613
+       Width |  -.0003343   .0009045    -0.37   0.712    -.0021075    .0014388
+             |
+        Year |
+       2010  |  -.4539681   .6768246    -0.67   0.502     -1.78087    .8729342
+       2011  |   .1711016   .6757043     0.25   0.800    -1.153604    1.495808
+       2012  |   1.302928   .6810076     1.91   0.056    -.0321751    2.638031
+             |
+       _cons |   32.29266   .7225982    44.69   0.000     30.87602     33.7093
+------------------------------------------------------------------------------
+
+. // End of Part c------------------------------------------------------------------------------------------------------------------
+. 
+. // Part d ------------------------------------------------------------------------------------------------------------------------
+. regress Highwaympg c.Horsepower##c.Torque Height Length Width i.Year
+
+      Source |       SS           df       MS      Number of obs   =     4,591
+-------------+----------------------------------   F(9, 4581)      =    480.07
+       Model |  81105.8715         9  9011.76351   Prob > F        =    0.0000
+    Residual |   85993.096     4,581  18.7716865   R-squared       =    0.4854
+-------------+----------------------------------   Adj R-squared   =    0.4844
+       Total |  167098.968     4,590  36.4050038   Root MSE        =    4.3326
+
+---------------------------------------------------------------------------------------
+           Highwaympg | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+----------------------+----------------------------------------------------------------
+           Horsepower |  -.0166633   .0025388    -6.56   0.000    -.0216406    -.011686
+               Torque |  -.0860593   .0025333   -33.97   0.000    -.0910257   -.0810928
+                      |
+c.Horsepower#c.Torque |   .0001124   4.63e-06    24.28   0.000     .0001033    .0001214
+                      |
+               Height |   .0065604   .0010696     6.13   0.000     .0044634    .0086573
+               Length |   .0017767   .0008318     2.14   0.033     .0001459    .0034075
+                Width |  -.0011694   .0008521    -1.37   0.170      -.00284    .0005011
+                      |
+                 Year |
+                2010  |  -.5627858   .6371716    -0.88   0.377    -1.811949    .6863777
+                2011  |   .0725356   .6361142     0.11   0.909    -1.174555    1.319626
+                2012  |   1.197033   .6411085     1.87   0.062    -.0598488    2.453915
+                      |
+                _cons |   42.18795   .7930274    53.20   0.000     40.63323    43.74266
+---------------------------------------------------------------------------------------
+
+. 
+. _pctile Torque, p(25,50,75)
+
+. local q1 = r(r1)
+
+. local q2 = r(r2)
+
+. local q3 = r(r3) 
+
+. 
+. margins, at(Horsepower=(100(100)700) Torque=(`q1' `q2' `q3`'') Year=(2009(1)2012))
+
+Predictive margins                                       Number of obs = 4,591
+Model VCE: OLS
+
+Expression: Linear prediction, predict()
+1._at:  Horsepower =  100
+        Torque     =  177
+        Year       = 2009
+2._at:  Horsepower =  100
+        Torque     =  177
+        Year       = 2010
+3._at:  Horsepower =  100
+        Torque     =  177
+        Year       = 2011
+4._at:  Horsepower =  100
+        Torque     =  177
+        Year       = 2012
+5._at:  Horsepower =  100
+        Torque     =  257
+        Year       = 2009
+6._at:  Horsepower =  100
+        Torque     =  257
+        Year       = 2010
+7._at:  Horsepower =  100
+        Torque     =  257
+        Year       = 2011
+8._at:  Horsepower =  100
+        Torque     =  257
+        Year       = 2012
+9._at:  Horsepower =  100
+        Torque     =  332
+        Year       = 2009
+10._at: Horsepower =  100
+        Torque     =  332
+        Year       = 2010
+11._at: Horsepower =  100
+        Torque     =  332
+        Year       = 2011
+12._at: Horsepower =  100
+        Torque     =  332
+        Year       = 2012
+13._at: Horsepower =  200
+        Torque     =  177
+        Year       = 2009
+14._at: Horsepower =  200
+        Torque     =  177
+        Year       = 2010
+15._at: Horsepower =  200
+        Torque     =  177
+        Year       = 2011
+16._at: Horsepower =  200
+        Torque     =  177
+        Year       = 2012
+17._at: Horsepower =  200
+        Torque     =  257
+        Year       = 2009
+18._at: Horsepower =  200
+        Torque     =  257
+        Year       = 2010
+19._at: Horsepower =  200
+        Torque     =  257
+        Year       = 2011
+20._at: Horsepower =  200
+        Torque     =  257
+        Year       = 2012
+21._at: Horsepower =  200
+        Torque     =  332
+        Year       = 2009
+22._at: Horsepower =  200
+        Torque     =  332
+        Year       = 2010
+23._at: Horsepower =  200
+        Torque     =  332
+        Year       = 2011
+24._at: Horsepower =  200
+        Torque     =  332
+        Year       = 2012
+25._at: Horsepower =  300
+        Torque     =  177
+        Year       = 2009
+26._at: Horsepower =  300
+        Torque     =  177
+        Year       = 2010
+27._at: Horsepower =  300
+        Torque     =  177
+        Year       = 2011
+28._at: Horsepower =  300
+        Torque     =  177
+        Year       = 2012
+29._at: Horsepower =  300
+        Torque     =  257
+        Year       = 2009
+30._at: Horsepower =  300
+        Torque     =  257
+        Year       = 2010
+31._at: Horsepower =  300
+        Torque     =  257
+        Year       = 2011
+32._at: Horsepower =  300
+        Torque     =  257
+        Year       = 2012
+33._at: Horsepower =  300
+        Torque     =  332
+        Year       = 2009
+34._at: Horsepower =  300
+        Torque     =  332
+        Year       = 2010
+35._at: Horsepower =  300
+        Torque     =  332
+        Year       = 2011
+36._at: Horsepower =  300
+        Torque     =  332
+        Year       = 2012
+37._at: Horsepower =  400
+        Torque     =  177
+        Year       = 2009
+38._at: Horsepower =  400
+        Torque     =  177
+        Year       = 2010
+39._at: Horsepower =  400
+        Torque     =  177
+        Year       = 2011
+40._at: Horsepower =  400
+        Torque     =  177
+        Year       = 2012
+41._at: Horsepower =  400
+        Torque     =  257
+        Year       = 2009
+42._at: Horsepower =  400
+        Torque     =  257
+        Year       = 2010
+43._at: Horsepower =  400
+        Torque     =  257
+        Year       = 2011
+44._at: Horsepower =  400
+        Torque     =  257
+        Year       = 2012
+45._at: Horsepower =  400
+        Torque     =  332
+        Year       = 2009
+46._at: Horsepower =  400
+        Torque     =  332
+        Year       = 2010
+47._at: Horsepower =  400
+        Torque     =  332
+        Year       = 2011
+48._at: Horsepower =  400
+        Torque     =  332
+        Year       = 2012
+49._at: Horsepower =  500
+        Torque     =  177
+        Year       = 2009
+50._at: Horsepower =  500
+        Torque     =  177
+        Year       = 2010
+51._at: Horsepower =  500
+        Torque     =  177
+        Year       = 2011
+52._at: Horsepower =  500
+        Torque     =  177
+        Year       = 2012
+53._at: Horsepower =  500
+        Torque     =  257
+        Year       = 2009
+54._at: Horsepower =  500
+        Torque     =  257
+        Year       = 2010
+55._at: Horsepower =  500
+        Torque     =  257
+        Year       = 2011
+56._at: Horsepower =  500
+        Torque     =  257
+        Year       = 2012
+57._at: Horsepower =  500
+        Torque     =  332
+        Year       = 2009
+58._at: Horsepower =  500
+        Torque     =  332
+        Year       = 2010
+59._at: Horsepower =  500
+        Torque     =  332
+        Year       = 2011
+60._at: Horsepower =  500
+        Torque     =  332
+        Year       = 2012
+61._at: Horsepower =  600
+        Torque     =  177
+        Year       = 2009
+62._at: Horsepower =  600
+        Torque     =  177
+        Year       = 2010
+63._at: Horsepower =  600
+        Torque     =  177
+        Year       = 2011
+64._at: Horsepower =  600
+        Torque     =  177
+        Year       = 2012
+65._at: Horsepower =  600
+        Torque     =  257
+        Year       = 2009
+66._at: Horsepower =  600
+        Torque     =  257
+        Year       = 2010
+67._at: Horsepower =  600
+        Torque     =  257
+        Year       = 2011
+68._at: Horsepower =  600
+        Torque     =  257
+        Year       = 2012
+69._at: Horsepower =  600
+        Torque     =  332
+        Year       = 2009
+70._at: Horsepower =  600
+        Torque     =  332
+        Year       = 2010
+71._at: Horsepower =  600
+        Torque     =  332
+        Year       = 2011
+72._at: Horsepower =  600
+        Torque     =  332
+        Year       = 2012
+73._at: Horsepower =  700
+        Torque     =  177
+        Year       = 2009
+74._at: Horsepower =  700
+        Torque     =  177
+        Year       = 2010
+75._at: Horsepower =  700
+        Torque     =  177
+        Year       = 2011
+76._at: Horsepower =  700
+        Torque     =  177
+        Year       = 2012
+77._at: Horsepower =  700
+        Torque     =  257
+        Year       = 2009
+78._at: Horsepower =  700
+        Torque     =  257
+        Year       = 2010
+79._at: Horsepower =  700
+        Torque     =  257
+        Year       = 2011
+80._at: Horsepower =  700
+        Torque     =  257
+        Year       = 2012
+81._at: Horsepower =  700
+        Torque     =  332
+        Year       = 2009
+82._at: Horsepower =  700
+        Torque     =  332
+        Year       = 2010
+83._at: Horsepower =  700
+        Torque     =  332
+        Year       = 2011
+84._at: Horsepower =  700
+        Torque     =  332
+        Year       = 2012
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |     Margin   std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         _at |
+          1  |   28.31009   .6621744    42.75   0.000     27.01191    29.60828
+          2  |   27.74731   .2234658   124.17   0.000     27.30921    28.18541
+          3  |   28.38263   .2268441   125.12   0.000     27.93791    28.82735
+          4  |   29.50713   .2452787   120.30   0.000     29.02626    29.98799
+          5  |   22.32421   .7180248    31.09   0.000     20.91653    23.73188
+          6  |   21.76142   .3503804    62.11   0.000     21.07451    22.44834
+          7  |   22.39674   .3539364    63.28   0.000     21.70286    23.09063
+          8  |   23.52124   .3710271    63.39   0.000     22.79385    24.24863
+          9  |   16.71244   .8057693    20.74   0.000     15.13274    18.29213
+         10  |   16.14965   .5024755    32.14   0.000     15.16456    17.13474
+         11  |   16.78497   .5058735    33.18   0.000     15.79322    17.77673
+         12  |   17.90947   .5213008    34.36   0.000     16.88747    18.93147
+         13  |   28.63248    .630785    45.39   0.000     27.39583    29.86912
+         14  |   28.06969   .1278786   219.50   0.000     27.81899    28.32039
+         15  |   28.70501   .1250433   229.56   0.000     28.45987    28.95016
+         16  |   29.82951   .1433775   208.05   0.000     29.54842     30.1106
+         17  |   23.54544   .6424005    36.65   0.000     22.28603    24.80486
+         18  |   22.98266   .1629551   141.04   0.000     22.66318    23.30213
+         19  |   23.61798   .1638654   144.13   0.000     23.29672    23.93923
+         20  |   24.74247   .1882486   131.44   0.000     24.37342    25.11153
+         21  |   18.77635    .692673    27.11   0.000     17.41837    20.13432
+         22  |   18.21356   .2989504    60.93   0.000     17.62747    18.79965
+         23  |   18.84888   .3010316    62.61   0.000     18.25872    19.43905
+         24  |   19.97338   .3203764    62.34   0.000     19.34529    20.60147
+         25  |   28.95486   .6745867    42.92   0.000     27.63234    30.27737
+         26  |   28.39207    .283781   100.05   0.000     27.83572    28.94842
+         27  |   29.02739    .278525   104.22   0.000     28.48135    29.57344
+         28  |   30.15189   .2805625   107.47   0.000     29.60185    30.70193
+         29  |   24.76668   .6342634    39.05   0.000     23.52321    26.01014
+         30  |   24.20389   .1511133   160.17   0.000     23.90764    24.50015
+         31  |   24.83921   .1446569   171.71   0.000     24.55561    25.12281
+         32  |   25.96371   .1603334   161.94   0.000     25.64938    26.27804
+         33  |   20.84026    .634713    32.83   0.000     19.59591     22.0846
+         34  |   20.27747   .1370913   147.91   0.000     20.00871    20.54624
+         35  |   20.91279   .1336597   156.46   0.000     20.65075    21.17483
+         36  |   22.03729   .1614327   136.51   0.000      21.7208    22.35378
+         37  |   29.27724   .7810298    37.49   0.000     27.74604    30.80843
+         38  |   28.71445   .4924156    58.31   0.000     27.74908    29.67982
+         39  |   29.34977   .4871132    60.25   0.000      28.3948    30.30475
+         40  |   30.47427   .4843927    62.91   0.000     29.52463    31.42391
+         41  |   25.98791   .6959846    37.34   0.000     24.62345    27.35238
+         42  |   25.42513   .3340792    76.11   0.000     24.77017    26.08008
+         43  |   26.06045   .3278601    79.49   0.000     25.41768    26.70321
+         44  |   27.18494   .3293462    82.54   0.000     26.53927    27.83062
+         45  |   22.90417   .6468834    35.41   0.000     21.63596    24.17237
+         46  |   22.34138   .2018655   110.67   0.000     21.94563    22.73713
+         47  |    22.9767   .1940175   118.43   0.000     22.59633    23.35707
+         48  |    24.1012   .2049706   117.58   0.000     23.69936    24.50304
+         49  |   29.59962   .9288222    31.87   0.000     27.77868    31.42056
+         50  |   29.03683   .7086447    40.98   0.000     27.64755    30.42612
+         51  |   29.67216   .7033812    42.19   0.000     28.29319    31.05112
+         52  |   30.79665    .698799    44.07   0.000     29.42667    32.16664
+         53  |   27.20915   .8117831    33.52   0.000     25.61766    28.80063
+         54  |   26.64636   .5411797    49.24   0.000     25.58539    27.70733
+         55  |   27.28168   .5353052    50.96   0.000     26.23223    28.33114
+         56  |   28.40618   .5326574    53.33   0.000     27.36191    29.45044
+         57  |   24.96808   .7256643    34.41   0.000     23.54542    26.39073
+         58  |   24.40529   .3940029    61.94   0.000     23.63286    25.17773
+         59  |   25.04061   .3872384    64.66   0.000     24.28144    25.79979
+         60  |   26.16511   .3879412    67.45   0.000     25.40456    26.92566
+         61  |     29.922   1.101443    27.17   0.000     27.76264    32.08136
+         62  |   29.35922   .9271701    31.67   0.000     27.54151    31.17692
+         63  |   29.99454   .9219402    32.53   0.000     28.18709    31.80198
+         64  |   31.11903   .9163878    33.96   0.000     29.32247     32.9156
+         65  |   28.43038   .9623316    29.54   0.000     26.54375    30.31701
+         66  |   27.86759   .7527516    37.02   0.000     26.39184    29.34335
+         67  |   28.50292   .7470636    38.15   0.000     27.03831    29.96752
+         68  |   29.62741   .7426115    39.90   0.000     28.17154    31.08329
+         69  |   27.03199   .8527909    31.70   0.000     25.36011    28.70387
+         70  |    26.4692   .6018802    43.98   0.000     25.28923    27.64918
+         71  |   27.10452   .5956487    45.50   0.000     25.93676    28.27228
+         72  |   28.22902   .5928884    47.61   0.000     27.06667    29.39137
+         73  |   30.24438   1.288955    23.46   0.000     27.71741    32.77136
+         74  |    29.6816    1.14668    25.88   0.000     27.43355    31.92964
+         75  |   30.31692   1.141475    26.56   0.000     28.07908    32.55476
+         76  |   31.44142   1.135331    27.69   0.000     29.21562    33.66721
+         77  |   29.65162   1.133872    26.15   0.000     27.42868    31.87455
+         78  |   29.08883   .9658609    30.12   0.000     27.19528    30.98238
+         79  |   29.72415    .960286    30.95   0.000     27.84153    31.60677
+         80  |   30.84865   .9548364    32.31   0.000     28.97671    32.72059
+         81  |    29.0959   1.010173    28.80   0.000     27.11547    31.07632
+         82  |   28.53311   .8135197    35.07   0.000     26.93822      30.128
+         83  |   29.16843    .807573    36.12   0.000      27.5852    30.75166
+         84  |   30.29293   .8031612    37.72   0.000     28.71835    31.86751
+------------------------------------------------------------------------------
+
+. marginsplot
+
+Variables that uniquely identify margins: Horsepower Torque Year
+
+. // End of Part d------------------------------------------------------------------------------------------------------------------
+. 
+. // Part e ------------------------------------------------------------------------------------------------------------------------
+. tabulate Year, generate(Year_dummies)
+
+Identificat |
+   ion.Year |      Freq.     Percent        Cum.
+------------+-----------------------------------
+       2009 |         48        1.05        1.05
+       2010 |      1,633       35.57       36.62
+       2011 |      1,794       39.08       75.69
+       2012 |      1,116       24.31      100.00
+------------+-----------------------------------
+      Total |      4,591      100.00
+
+. gen Inter = Horsepower * Torque
+
+. gen ones = 1
+
+. 
+. //y
+. mkmat Highwaympg, matrix(y)
+
+. 
+. //part c
+. mkmat ones Horsepower Torque Height Length Width Year_dummies2 Year_dummies3 Year_dummies4, matrix(designofc)
+
+. 
+. //part d
+. mkmat ones Horsepower Torque Height Length Width Year_dummies2 Year_dummies3 Year_dummies4 Inter, matrix(designofd)
+
+. 
+. mata:
+------------------------------------------------- mata (type end to exit) ----------------------------------------------------------------------------------------------------------------
+: 
+: real matrix cal_beta(real matrix X, real matrix y)
+> {
+>     real matrix XTX_inv, b
+>     XTX_inv = invsym(X' * X)
+>     b = XTX_inv * X' * y
+>     return(b)
+> }
+
+: 
+: designofc = st_matrix("designofc")
+
+: designofd = st_matrix("designofd")
+
+: y = st_matrix("y")
+
+: 
+: // part c
+: betac = cal_beta(designofc, y)
+
+: st_matrix("betac", betac)
+
+: 
+: //part d
+: betad = cal_beta(designofd, y)
+
+: st_matrix("betad", betad)
+
+: 
+: mata clear
+
+: end
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+. 
+. matrix list betac
+
+betac[9,1]
+            c1
+r1   32.292663
+r2   .01635563
+r3  -.05074246
+r4   .00990789
+r5   .00172898
+r6  -.00033432
+r7  -.45396812
+r8   .17110164
+r9   1.3029279
+
+. matrix list betad
+
+betad[10,1]
+             c1
+ r1   42.187948
+ r2  -.01666332
+ r3  -.08605927
+ r4   .00656039
+ r5   .00177672
+ r6  -.00116945
+ r7  -.56278578
+ r8   .07253564
+ r9    1.197033
+r10   .00011236
+
+. // End of Part e------------------------------------------------------------------------------------------------------------------
+. 
+end of do-file
+
+. 
+```
 
