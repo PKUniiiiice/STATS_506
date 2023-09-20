@@ -1,5 +1,5 @@
 ---
-title: "STATS 506 HW1"
+title: "STATS 506 HW2"
 author: "Minxuan Chen"
 date: last-modified
 format:
@@ -24,566 +24,295 @@ code-line-numbers: true
 ---
 Github repo: <https://github.com/PKUniiiiice/STATS_506>
 
-## Problem 1 Wine data
+## Problem 1 Dice Game
 ### a
 ```{r p1a}
-wine.data <- read.table("./wine.data", sep=",", header=FALSE,
-                        col.name=c(
-        "class", "Alcohol", "Malic acid", "Ash",
-	      "Alcalinity_of_ash", "Magnesium", "Total_phenols",
- 	      "Flavanoids", "Nonflavanoid_phenols", "Proanthocyanins",
-	      "Color_intensity","Hue", "OD280_OD315_of_diluted_wines",
- 	      "Proline" ))
-head(wine.data)
+# For simplicity, for all functions below, we assume the input `x`
+# is always legal, i.e. always an integer.
+
+#' Function to for a dice game -- loop version
+#'
+#' @param x the number of dice to roll
+#' @return total winnings or loses
+play_dice_loop <- function(x){
+  #initial money
+  money <- 0
+  for (i in 1:x){
+    # out of rolling
+    out <- sample.int(6,1)
+    money <- money - 2 + (-(out%%2)+1)*out
+  }
+  return (money)
+}
+
+#' Function to for a dice game -- built-in R vectorized version
+#'
+#' @param x the number of dice to roll
+#' @return total winnings or loses
+play_dice_vec <- function(x){
+  #initial money
+  money <- rep(-2, x)
+  out <- sample.int(6, size=x, replace=TRUE)
+  money <- money + (-(out%%2)+1)*out
+  return(sum(money))
+}
+
+#' Function to for a dice game -- built-in R vectorized version
+#'
+#' @param x the number of dice to roll
+#' @return total winnings or loses
+play_dice_vec <- function(x){
+  #initial money
+  money <- rep(-2, x)
+  out <- sample.int(6, size=x, replace=TRUE)
+  money <- money + (-(out%%2)+1)*out
+  return(sum(money))
+}
+
+#' Function to for a dice game -- table version
+#'
+#' @param x the number of dice to roll
+#' @return total winnings or loses
+play_dice_table <- function(x){
+  out <- factor(sample.int(6, size=x, replace=TRUE), levels=1:6)
+  #make a table from out
+  out.tab <- table(out)
+  money <- -2*x + sum(as.numeric(out.tab[c(2,4,6)])*c(2,4,6))
+  return(money)
+}
+
+#' Function to for a dice game -- apply version
+#' 
+#' @param x the number of dice to roll
+#' @return total winnings or loses
+play_dice_apply <- function(x){
+  
+  #We def another function to calculate money
+  money_cal <- function(x){
+    return ( -2 + (-(x%%2)+1) * x )  
+  }
+  out <- sample.int(6, size=x, replace=TRUE)
+  money <- sum(sapply(out, money_cal))
+  return (money)
+}
+
 ```
 
 ### b
-`wine.names` reports that  
-
-> 9. Class Distribution: number of instances per class  
-  class 1 59  
-  class 2 71  
-  class 3 48  
-
-In our dataframe
 ```{r p1b}
-wine.data$class <- as.factor(wine.data$class)
-summary(wine.data$class)
+for (x in c(3,3000,100000)){
+  cat("Number of dice to roll: ", x, "\n")
+  print(play_dice_loop(x))
+  print(play_dice_vec(x))
+  print(play_dice_table(x))
+  print(play_dice_apply(x))
+}
 ```
 
 ### c
+We use `set.seed()`before each call to control the randomization.
 ```{r p1c}
-# 1
-wine.data[which.max(wine.data$Alcohol) ,1]
-# 2
-wine.data[which.min(wine.data$Alcohol) ,1]
-# 3
-sum((wine.data$Magnesium>114))
-# 4
-tapply((wine.data$Magnesium>114), wine.data$class, FUN=sum)
+for (i in list(c(3,2873), c(3000,18218))){
+  cat("Number of dice to roll: ", i[1], "\n")
+  set.seed(i[2])
+  print(play_dice_loop(i[1]))
+  
+  set.seed(i[2])
+  print(play_dice_vec(i[1]))
+  
+  set.seed(i[2])
+  print(play_dice_table(i[1]))
+  
+  set.seed(i[2])
+  print(play_dice_apply(i[1]))
+}
 ```
 
+The four versions can give the same result.
+
 ### d
-```{r p14}
-all.tab <- c(class=NA, colMeans(wine.data[, -1]))
-class.tab <- aggregate(.~class, wine.data, mean)
-out.tab <- rbind(all.tab, class.tab)
-rownames(out.tab) <- c("overall", "class 1", "class 2", "class 3")
-out.tab[, -1]
+```{r p1d}
+library(microbenchmark)
+ress <- list()
+for (x in c(10, 100, 1000, 10000)){
+  cat(log10(x)," Number of dice to roll: ", x, "\n")
+  result <- microbenchmark(
+    loop = play_dice_loop(x),
+    vectorized = play_dice_vec(x),
+    table = play_dice_table(x),
+    apply = play_dice_apply(x)
+  )
+  ress <- append(ress, list(result))
+}
+print(ress)
 ```
+
+It's obvious that the vectorized version is the fastest, while the pure for-loop version is the slowest. This is a natural result of the fact that built-in vectorized functions are executed in compiled C or Fortran code, as opposed to much more R codes that a for-loop uses.
+
+As for the 'apply' version, it involves loop-hiding. We use `sapply`, which calls `lapply`. The later drop down to C for its loops, however, at each step in the C loop, they evaluate the R function (i.e. `money_cal`) passed in. So it is slower than vectorization but not as slow as a pure for-loop.
+
+The table version is slightly slower than vectorization. The main reason is the conversion of the rolling result to a factor and the subsequent counting of its frequency.
+
+
+When we compare the performance between a small input size (100) and a large input size (10000), a significant increase in time cost becomes evident for the for-loop version, approximately 100 times slower for the larger input. However, the other three versions do not exhibit such a substantial increase.
+
+Upon closer examination of the time cost as it changes from 10 to 10000, we observe distinct patterns. The for-loop and `apply` versions show a linear increase with a slope approx 1. In contrast, the table and vectorization versions display a relatively flatter curve initially.
 
 ### e
-We'd like to treat this as a multiple comparisons problem. Use Bonferroni correction
+We care about the total amount of money after $n$ dice games, denoting it by $X_n$. Let $M_i$ represent the single income we obtain after the i-th dice game . $M_i$s are i.i.d. Then
+$$
+X_n = \sum_{i=1}^nM_i
+$$
+To judge whether the game is fair, we calculate
+$$
+EX_n = E\left(\sum_{i=1}^nM_i\right) = nEM_1
+$$
+In theory
+$$
+EM_1 = \frac{1}{6}(-2\times6+2+4+6)=0 \to EX_n=0
+$$
+That is, no matter how many games we play, the expected income is 0, so this is a fair game.
+
+We can  show this conclusion using Monte Carlo simulation. Our goal is to estimate $EM_1$. Due to i.i.d of $M_i$s, we can directly use the output of `play_dice(n)`. For example, if the sample size is 10000000,
 ```{r p1e}
-pairwise.t.test(wine.data$Ash, wine.data$class, p.adjust.method="bonferroni")
+play_dice_vec(10000000)/10000000
 ```
-Based on the output, with an overall $\alpha$ level of 0.05, the level of Ash is not all equal across the three classes. Furthermore, we can observe significant differences between class 1 and 2, as well as between class 2 and 3. However, there is no significant difference between class 1 and 3.
+This value is close to zero, so we claim that $\widehat{EM_i}=0$, then $\widehat{EX_n}=0$.
 
-Implement manually:
-```{R p1ee}
-var.tab <- aggregate(Ash~class, wine.data, FUN=var)
-idx <- list(c(1, 2), c(1, 3), c(2, 3))
-cls.nb <- c(59, 71, 48)
-sd.pool <- sqrt(sum((cls.nb-1)*var.tab$Ash)/(sum(cls.nb)-3))
-p.values <- seq(3)
-for (i in seq(3)){
-  i1 <- idx[[i]][1]
-  i2 <- idx[[i]][2]
-  p.values[i] <- 2*(1-pt(abs(out.tab[i1+1, 4]-out.tab[i2+1, 4])/
-                    (sqrt(1/cls.nb[i1]+1/cls.nb[i2])*sd.pool), 
-                df=sum(cls.nb)-3))
-}
-p.values
-```
-Please note that these p-values are unadjusted, and multiplying them by 3 will yield the Bonferroni-corrected result (R output). Thus, we obtain the same and correct result through manual calculation.
-
-## Problem 2 Perfect Powers
-Here, we use the definition of perfect power from [wikipedia](https://en.wikipedia.org/wiki/Perfect_power), which requires
-$$r>1 \text{ and } p>1$$
-
+## Problem 2 Linear Regression
 ### a
 ```{r p2a}
-isPerfectPower <- function(number, p){
-    maxroot <- ceiling(number^(1/p))
-    roots <- abs(seq(2,maxroot)^p-number) < sqrt(.Machine$double.eps)
-    id <- which.max(roots)
-    if (sum(roots)==0)
-        return(list(isPerfect=FALSE, root=number^(1/p)))
-    return(list(isPerfect=TRUE, root=id+1))
+cars <- read.csv("./cars.csv")
+
+newname <- colnames(cars)
+for (i in 1:dim(cars)[2]){
+  tmp <- unlist(strsplit(newname[i], "[.]"))
+  if (i<4){
+    newname[i] = tmp[2]
+  }
+  else if (i<12){
+    newname[i] = paste(tmp[3:length(tmp)],collapse='.')
+  }
+  else if (i<17){
+    newname[i] = paste(tmp[2:length(tmp)],collapse='.')
+  }
+  else{
+    newname[i] = paste(tmp[5:length(tmp)],collapse='.')
+  }
 }
-isPerfectPower(27, p=2)
+
+colnames(cars) <- newname
 ```
+
 ### b
 ```{r p2b}
-findRootPower <- function(number){
-  maxpower <- ceiling(log2(number))
-  if (maxpower<2){
-    return ("Not a perfect power")
-  }
-  for (i in 2:maxpower){
-    res <- isPerfectPower(number, p=i)
-    if (res$isPerfect)
-      return (paste(number," = ", res$root, "^", i))
-  }
-  return ("Not a perfect power")
-}
-for (i in c(27, 13060694016, 7776, 170859375, 58247422, 94143178827)){
-  print(i)
-  print(findRootPower(i))
-}
-```
-
-## Problem 3 ChatGPT
-### a
-GPT-3.5 output:
-
-> Here are two R functions for your requirements. The first function, `identify_poker_hand`, takes a vector of suits and a vector of ranks representing a 5-card hand and returns the name of the hand. The second function, `deal_poker_round`, simulates dealing a round of cards in a game of poker (5 card stud) for a specified number of players, displays all the hands, and uses the first function to display the name of each hand.
-
-```{r p3a}
-#| code-fold: true
-# Function to identify the poker hand
-identify_poker_hand <- function(suits, ranks) {
-  # Ensure that suits and ranks are sorted
-  suits <- sort(suits)
-  ranks <- sort(ranks)
-  
-  # Function to check if the hand is a flush
-  is_flush <- function(suits) {
-    all(suits == suits[1])
-  }
-  
-  # Function to check if the hand is a straight
-  is_straight <- function(ranks) {
-    all(diff(ranks) == 1)
-  }
-  
-  # Check for specific poker hands
-  if (is_flush(suits) && is_straight(ranks)) {
-    if (max(ranks) == 14) {
-      return("Royal Flush")
-    } else {
-      return("Straight Flush")
-    }
-  } else if (any(table(ranks) == 4)) {
-    return("Four of a Kind")
-  } else if (all(table(ranks) == c(2, 3))) {
-    return("Full House")
-  } else if (is_flush(suits)) {
-    return("Flush")
-  } else if (is_straight(ranks)) {
-    return("Straight")
-  } else if (any(table(ranks) == 3)) {
-    return("Three of a Kind")
-  } else if (sum(table(ranks) == 2) == 4) {
-    return("Two Pair")
-  } else if (sum(table(ranks) == 2) == 2) {
-    return("One Pair")
-  } else {
-    return("High Card")
-  }
-}
-
-# Function to simulate dealing a round of poker
-deal_poker_round <- function(num_players) {
-  # Define the suits and ranks
-  suits <- c("Hearts", "Diamonds", "Clubs", "Spades")
-  ranks <- c(2:10, "Jack", "Queen", "King", "Ace")
-  
-  # Create a deck of cards
-  deck <- expand.grid(Rank = ranks, Suit = suits)
-  
-  # Shuffle the deck
-  deck <- deck[sample(nrow(deck)), ]
-  
-  # Deal cards to players
-  hands <- list()
-  for (i in 1:num_players) {
-    start <- (i - 1) * 5 + 1
-    end <- i * 5
-    player_hand <- deck[start:end, ]
-    hands[[paste("Player", i)]] <- player_hand
-    cat("Player", i, "Hand:", "\n")
-    print(player_hand)
-    cat("Hand Name:", identify_poker_hand(player_hand$Suit, player_hand$Rank), "\n")
-    cat("\n")
-  }
-  
-  return(hands)
-}
+cars <- cars[cars$Fuel.Type=="Gasoline", ]
 
 ```
 
-> You can adjust the `num_players` variable to specify the number of players in the game. This code defines the poker hands and simulates dealing cards for each player, displaying their hands and identifying the name of each hand using the `identify_poker_hand` function.
+### c
+We need to introduce these variables into the model for controlling.
+```{r p2c}
+# we need to convert year to factor at first
+cars$f.years <- as.factor(cars$Year)
 
-### b
-We need to check the validity of two functions `identity_poker_hand()` and `deal_poker_round()`. We directly run the example given by GPT.
-```{r p3b}
-# These three lines are also generated by GPT
-# Example usage:
-set.seed(123)  # Set a random seed for reproducibility
-num_players <- 4
-hands_dealt <- deal_poker_round(num_players)
+m.mpg <- lm(Highway.mpg ~ Horsepower + Torque + Height + 
+                          Length + Width + f.years, data=cars,
+            x=TRUE)
 
+summary(m.mpg)
 ```
 
-From the result, the code works, but throws **Warnings** when trying to return the hand name. We need to fix it and details can be found in part e ([-@sec-remy]).
+As we use a nominal factor to represent the categorical variable `Year`, the regression result includes three additional variables labeled as `f.years20xx`. These variables represent the differences relative to the reference year, which is `Year=2009`.
 
-### c {#sec-code}
-Commented codes.        
-Note that certain comments are automatically generated by GPT and are enclosed in parentheses. If no further comments are appended below these parentheses, it means that we agree with GPT.
-```r
-# (Function to identify the poker hand)
-identify_poker_hand <- function(suits, ranks) {
-  # (Ensure that suits and ranks are sorted)
-  suits <- sort(suits)
-  ranks <- sort(ranks)
-  
-  # (Function to check if the hand is a flush)
-  is_flush <- function(suits) {
-    # suits == suits[1] returns a logical vector representing whether each
-    # suit is the same as the first one. 
-    # all() can test if all of the values given are true. 
-    # So the return represent whether all the same suit, i.e. a flush
-    all(suits == suits[1])
-  }
-  
-  # (Function to check if the hand is a straight)
-  is_straight <- function(ranks) {
-    # From help(diff), "If x is a vector of length n and differences = 1,
-    # then the computed result is equal to the successive differences
-    # x[(1+lag):n] - x[1:(n-lag)]." Here lag=1(default). 
-    # This code test whether all diffs are 1, i.e. a straight
-    all(diff(ranks) == 1)
-  }
-  
-  # (Check for specific poker hands)
-  if (is_flush(suits) && is_straight(ranks)) {
-    # test whether contains ace (14)
-    if (max(ranks) == 14) {
-      return("Royal Flush")
-    } else {
-      return("Straight Flush")
-    }
-    # table() returns a contingency table of the counts at each levels 
-    # in rank. any() check whether at least one value is true.
-    # So 4 means four cards of the same suit
-  } else if (any(table(ranks) == 4)) {
-    return("Four of a Kind")
-    # full house will yield a table (2, 3) or (3, 2), depending on the order of ranks
-    # The method may be conceptually correct, but not the implementation
-  } else if (all(table(ranks) == c(2, 3))) {
-    return("Full House")
-    # trivial
-  } else if (is_flush(suits)) {
-    return("Flush")
-    # trivial
-  } else if (is_straight(ranks)) {
-    return("Straight")
-    # similar to "Four of a kind"
-  } else if (any(table(ranks) == 3)) {
-    return("Three of a Kind")
-    # table(ranks) == 2 yield a permutation of (TRUE, TRUE, FALSE)
-    # the method may be correct but the implementation requires adjustment.
-  } else if (sum(table(ranks) == 2) == 4) {
-    return("Two Pair")
-    # table(ranks) == 2 yield a permutation of (TRUE, FALSE, FALSE, FALSE)
-    # the method may be correct but the implementation requires adjustment.
-  } else if (sum(table(ranks) == 2) == 2) {
-    return("One Pair")
-  } else {
-    # trivial
-    return("High Card")
-  }
-}
+From the regression results, $\beta_{\text{Horsepower}}\doteq 0.0164$ indicates that on average MPG on the highway increases by 0.0164 with a unit increase in horsepower, when all other variables in this model are held constant (i.e. controlling all other variables).
 
-# (Function to simulate dealing a round of poker）
-deal_poker_round <- function(num_players) {
-  # (Define the suits and ranks)
-  suits <- c("Hearts", "Diamonds", "Clubs", "Spades")
-  ranks <- c(2:10, "Jack", "Queen", "King", "Ace")
-  
-  # (Create a deck of cards)
-  # expand.grid() returns the Cartesian product of ranks and suits, 
-  # which is the full representation of cards
-  deck <- expand.grid(Rank = ranks, Suit = suits)
-  
-  # (Shuffle the deck)
-  deck <- deck[sample(nrow(deck)), ]
-  
-  # (Deal cards to players)
-  hands <- list()
-  for (i in 1:num_players) {
-    # index is : 1st (1 2 3 4 5), 2nd (6,7,8,9,10)
-    # so we use the following two formulas
-    start <- (i - 1) * 5 + 1
-    end <- i * 5
-    # draw five cards from the deck
-    player_hand <- deck[start:end, ]
-    hands[[paste("Player", i)]] <- player_hand
-    cat("Player", i, "Hand:", "\n")
-    print(player_hand)
-    # print hand name
-    cat("Hand Name:", identify_poker_hand(player_hand$Suit, player_hand$Rank), "\n")
-    cat("\n")
-  }
-  
-  return(hands)
-}
-
-```
+(Note: the term "controlling all other variables"      
+For those other than `Year`, it means that they are held constant when making comparisons. As for `Year`, which has three terms in the model, it implies we only compare cars released in the same year, i.e., 2009 to 2009, 2010 to 2010, and so on.)
 
 ### d
-* Are the inputs and outputs as described above?
+```{r p2d}
+m.inter.mpg <- lm(Highway.mpg ~ Horsepower + Torque + 
+                                Horsepower:Torque + Height + 
+                                Length + Width + f.years, data=cars, x=TRUE)
 
-  Yes. As shown in the previous output.
-
-* Are the hands valid (e.g. real cards, no duplicates, right number)?
-
-  Yes. From
-  
-  ```r
-  suits <- c("Hearts", "Diamonds", "Clubs", "Spades")
-  ranks <- c(2:10, "Jack", "Queen", "King", "Ace")
-  deck <- expand.grid(Rank = ranks, Suit = suits)
-    
-  # (Shuffle the deck)
-  deck <- deck[sample(nrow(deck)), ]
-  ```
-
-* Are the names of the hands correct?  
-
-  No.
-  ```{r p3ddd}
-  #| warning: false
-  #full house
-  ranks <- c(2,2,2,3,3)
-  suits <- c("Hearts", "Diamonds", "Clubs", "Spades", "Clubs")
-  cat("Should be full house but: ", identify_poker_hand(suits, ranks))
-  
-  #two pair
-  ranks <- c(2,2,3,3,4)
-  suits <- c("Hearts", "Diamonds", "Clubs", "Spades", "Clubs")
-  cat("Should be two pair but: ", identify_poker_hand(suits, ranks))
-  
-  #one pair
-  ranks <- c(2,2,3,6,4)
-  suits <- c("Hearts", "Diamonds", "Clubs", "Spades", "Clubs")
-  cat("Should be one pair but: ", identify_poker_hand(suits, ranks))
-  ```
-
-* Does it ensure no duplicates in cards across hands? What happens if you ask for more than 10 hands to be dealt (as there are only 52 cards in a standard deck)?
-  
-  `expand.grid()` can generate non-duplicate 52 cards, and the default value of `replace` in `sample()` is `FALSE`, ensuring no duplicates in cards across hands.
-  
-  Asking more than 10 hands will result in `NA` value in Player 11's hands.
-  ```{r p3dddd}
-  #| warning: false
-  capture.output(out <- deal_poker_round(11), file=nullfile())
-  out[["Player 11"]]
-  ```
-  
-### e: Remedy {#sec-remy}
-We use the code in part c ([-@sec-code]) to analyse the errors.
-
-1. Line 4, 5, 68, 69 and 92. Sorting `ranks` which contains numbers and strings is problematic. Additionally, sorting `ranks` and `suits` separately can disrupt the `rank-suit` pairing.
-
-   We can use a named vector `2:14` to define the ranks. The sort of suits is unnecessary since we don't perform hand comparisons.
-   ```r
-   suits <- c("Hearts", "Diamonds", "Clubs", "Spades")
-   ranks <- 2:14
-   names(ranks) <- c(2:10, "Jack", "Queen", "King", "Ace")
-    
-   ranks.st <- sort(ranks, index.return=TRUE)
-   ranks <- ranks.st$x
-   suits <- suits[ranks.st$ix]
-   ```
-
-2. Line 40, full house. Full house will yield a table (2, 3) or (3, 2), depending on the order of ranks.
-   ```r
-   else if (identical(as.numeric((sort(table(ranks))), c(2, 3))) 
-   ```
-
-3. Line 53, two pair. Similar to full house.
-   ```r
-   else if (sum(table(ranks) == 2) == 2)
-   ```
-
-4. Line 57, one pair.
-   ```r
-   else if (sum(table(ranks) == 2) == 1)
-   ```
-   
-5. Line 66. We need to limit the number of players.
-   ```r
-   deal_poker_round <- function(num_players) {
-   if(num_players>10)
-      return (paste("Number of players is", num_players, "Too many!"))
-   ```
-6. Line 17, 26-31. Note that "A,2,3,4,5" is also a straight.
-   ```r
-   is_straight <- function(ranks) {
-     return (all(diff(ranks) == 1) || identical(ranks, c(2,3,4,5,14)))
-   }
-  
-   if (is_flush(suits) && is_straight(ranks)) {
-     # test whether contains ace (14)
-     if (min(ranks) == 10) {
-      return("Royal Flush")
-     } else {
-      return("Straight Flush")
-     }
-   ```
-   
-Revised :
-```{r p3e}
-# (Function to identify the poker hand)
-identify_poker_hand <- function(suits, ranks) {
-  # (Ensure that suits and ranks are sorted)
-   ranks.st <- sort(ranks, index.return=TRUE)
-   ranks <- ranks.st$x
-   suits <- suits[ranks.st$ix]
-   
-  # (Function to check if the hand is a flush)
-  is_flush <- function(suits) {
-    #suits == suits[1] returns a logical vector representing whether each
-    #suit is the same as the first one. 
-    #all() can test if all of the values given are true. 
-    #So the return represent whether all the same suit, i.e. a flush
-    all(suits == suits[1])
-  }
-  
-  # (Function to check if the hand is a straight)
-  is_straight <- function(ranks) {
-    #From help(diff), "If x is a vector of length n and differences = 1,
-    #then the computed result is equal to the successive differences
-    #x[(1+lag):n] - x[1:(n-lag)]." Here lag=1(default). 
-    #This code test whether all diffs are 1, i.e. a straight
-    return (all(diff(ranks) == 1) || identical(ranks, c(2,3,4,5,14)))
-  }
-  
-  # Check for specific poker hands
-  if (is_flush(suits) && is_straight(ranks)) {
-    # test whether contains ace (14)
-    if (min(ranks) == 10) {
-      return("Royal Flush")
-    } else {
-      return("Straight Flush")
-    }
-    # table() returns a contingency table of the counts at each levels 
-    # in rank. any() checks whether at least one value is true.
-    # So 4 means four cards of the same suit
-  } else if (any(table(ranks) == 4)) {
-    return("Four of a Kind")
-    # full house will yield a table (2, 3) or (3, 2), depending on the order of ranks
-    # The method may be conceptually correct, but the implementation requires adjustment.
-  } else if (identical(as.numeric(sort(table(ranks))), c(2, 3))) {
-    return("Full House")
-    # trivial
-  } else if (is_flush(suits)) {
-    return("Flush")
-    # trivial
-  } else if (is_straight(ranks)) {
-    return("Straight")
-    # similar to "Four of a kind"
-  } else if (any(table(ranks) == 3)) {
-    return("Three of a Kind")
-    # table(ranks) == 2 yield a permutation of (TRUE, TRUE, FALSE)
-  } else if (sum(table(ranks) == 2) == 2) {
-    return("Two Pair")
-    # table(ranks) == 2 yield a permutation of (TRUE, FALSE, FALSE, FALSE)
-  } else if (sum(table(ranks) == 2) == 1) {
-    return("One Pair")
-  } else {
-    #trivial
-    return("High Card")
-  }
-}
-
-# (Function to simulate dealing a round of poker）
-deal_poker_round <- function(num_players) {
-  
-  if(num_players>10)
-      return (paste("Number of players is", num_players, "Too many!"))
-  
-  # (Define the suits and ranks)
-  suits <- c("Hearts", "Diamonds", "Clubs", "Spades")
-  ranks <- 2:14
-  names(ranks) <- c(2:10, "Jack", "Queen", "King", "Ace")
-  
-  # (Create a deck of cards)
-  # expand.grid() returns the Cartesian product of ranks and suits, 
-  # which is the full representation of cards
-  deck <- expand.grid(Rank = ranks, Suit = suits)
-  
-  # (Shuffle the deck)
-  deck <- deck[sample(nrow(deck)), ]
-  row.names(deck) <- NULL
-  
-  # (Deal cards to players)
-  hands <- list()
-  for (i in 1:num_players) {
-    # index is : 1st (1 2 3 4 5), 2nd (6,7,8,9,10)
-    # so we use the following two formulas
-    start <- (i - 1) * 5 + 1
-    end <- i * 5
-    # draw five cards from the deck
-    player_hand <- deck[start:end, ]
-    
-    hands[[paste("Player", i)]] <- player_hand
-    cat("Player", i, "Hand:", "\n")
-    
-    print(data.frame(Rank=names(ranks[player_hand$Rank-1]),
-                     Suit=player_hand$Suit))
-    
-    # print hand name
-    cat("Hand Name:", 
-        identify_poker_hand(player_hand$Suit, player_hand$Rank), "\n")
-    cat("\n")
-  }
-  
-  return(hands)
-}
+summary(m.inter.mpg)
 ```
 
-Test: We employ different seeds to simulate hands dealt to a player.
-```{r test}
-#Royal Flush
-set.seed(436847)
-tp <- deal_poker_round(1)
+Note that the interaction term has a positive regression coefficient, so we expect that the slope of `MPG-Horsepower` line will increase with increase in Torque.
 
-#Straight Flush
-set.seed(145340)
-tp <- deal_poker_round(1)
+We choose the 25\%, 50\% and 75\% quantile value of Torque as three typical values to draw the interaction plot. Moreover, we fix the `Year` variables to the same value in one plot and draw 4 plots in total to reflect 4 levels of `Year`. As for other variables (all three dimensions), we use the default value given by function `interact_plot()`.
 
-#Four of a Kind
-set.seed(146431)
-tp <- deal_poker_round(1)
+```{r p2d 2}
+#| fig-width: 10
+#| fig-height: 8
+library(interactions)
+t1 <- interact_plot(m.inter.mpg, pred=Horsepower, modx=Torque,
+                    modx.values=as.numeric(quantile(cars$Torque)[2:4]),
+                    at=list(f.years=factor(2009,
+                              levels=c("2009", "2010", "2011", "2012")))) + 
+                    ggplot2::labs(title = "Year=2009")
 
-#Full House
-set.seed(37784)
-tp <- deal_poker_round(1)
+t2 <- interact_plot(m.inter.mpg, pred=Horsepower, modx=Torque,
+                    modx.values=as.numeric(quantile(cars$Torque)[2:4]),
+                    at=list(f.years=factor(2010,
+                              levels=c("2009", "2010", "2011", "2012")))) +
+                    ggplot2::labs(title = "Year=2010")
 
-#Flush
-set.seed(146907)
-tp <- deal_poker_round(1)
+t3 <- interact_plot(m.inter.mpg, pred=Horsepower, modx=Torque,
+                    modx.values=as.numeric(quantile(cars$Torque)[2:4]),
+                    at=list(f.years=factor(2011,
+                              levels=c("2009", "2010", "2011", "2012")))) +
+                    ggplot2::labs(title = "Year=2011")
 
-#Straight
-set.seed(147099)
-tp <- deal_poker_round(1)
+t4 <- interact_plot(m.inter.mpg, pred=Horsepower, modx=Torque,
+                    modx.values=as.numeric(quantile(cars$Torque)[2:4]),
+                    at=list(f.years=factor(2012,
+                              levels=c("2009", "2010", "2011", "2012")))) +
+                    ggplot2::labs(title = "Year=2012")
 
-#Three of a Kind
-set.seed(147217)
-tp <- deal_poker_round(1)
+library(gridExtra)
 
-#Two Pair
-set.seed(147251)
-tp <- deal_poker_round(1)
+grid.arrange(t1, t2, t3, t4, ncol = 2)
 
-#One Pair
-set.seed(147250)
-tp <- deal_poker_round(1)
-
-#High Card
-set.seed(147230)
-tp <- deal_poker_round(1)
 ```
+
+Note that the difference among years is just in intercept i.e. (translation of lines), which is because `Year` and `Horsepower` have no interaction.
+
+### e
+We try to reproduce the results in part c and d.
+```{r p2e}
+cal.beta <- function(y, design){
+  design <- as.matrix(design)
+  xtx.inv <- solve(crossprod(design))
+  return (xtx.inv %*% t(design) %*% y)
+}
+
+#part c design
+design.pc <- cars[c("Horsepower", "Torque", "Height", "Length", "Width")]
+design.pc <- cbind(rep(1, dim(cars)[1]),
+                   design.pc,
+                   model.matrix(~cars$f.years)[,2:4])
+
+
+#part d design
+inter <- cars$Horsepower * cars$Torque
+design.pd <- cbind(design.pc, inter)
+
+y.cd <- cars$Highway.mpg
+
+#beta of part c
+cal.beta(y.cd, design.pc)
+
+#beta of part d
+cal.beta(y.cd, design.pd)
+```
+
+We got the same result as `lm` did prior.
+
+## Problem 3
+
+
+
+
+
