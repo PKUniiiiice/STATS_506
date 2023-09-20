@@ -310,6 +310,59 @@ cal.beta(y.cd, design.pd)
 
 We got the same result as `lm` did prior.
 
+
+
+```{r}
+library(ggplot2)
+# Create a data frame with the combinations of Torque and years
+combinations <- expand.grid(Torque = c(177, 233, 333),
+                            f.years = as.factor(c(2009, 2010, 2011, 2012)))
+                                                                           
+
+# Create a list to store the predictions for each combination
+predictions <- list()
+
+# Loop through each combination and calculate predictions
+for (i in 1:nrow(combinations)) {
+  pred_data <- data.frame(Horsepower = seq(100, 700, 100),
+                          Torque = rep(combinations$Torque[i], 7),
+                          Height = rep(200, 7),
+                          Length = rep(200, 7),
+                          Width = rep(200, 7),
+                          f.years = rep(combinations$f.years[i], 7))
+  
+  predictions[[i]] <- predict(m.inter.mpg, newdata = pred_data)
+}
+
+# Create the interaction plot using ggplot2
+library(ggplot2)
+
+# Combine the predictions into a data frame
+plot_data <- data.frame(
+  Horsepower = rep(seq(100, 700, 100), times = nrow(combinations)),
+  Predicted = unlist(predictions),
+  Torque = rep(combinations$Torque, each = 7),
+  f.years = rep(combinations$f.years, each = 7)
+)
+
+# Create the interaction plot
+# Create the interaction plot
+ggplot(plot_data, aes(x = Horsepower, y = Predicted, color = interaction(Torque, f.years))) +
+  geom_line(aes(group = interaction(Torque, f.years))) +
+  labs(x = "Horsepower", y = "Predicted Value", color = "Combination") +
+  scale_color_manual(values = c("177.2009" = "red", "177.2010" = "blue", "233.2009" = "green",
+                                 "233.2010" = "orange", "333.2009" = "purple", "333.2010" = "brown"),
+                     breaks = c("177.2009", "177.2010", "233.2009", "233.2010", "333.2009", "333.2010"),
+                     labels = c("177.2009", "177.2010", "233.2009", "233.2010", "333.2009", "333.2010")) +
+  theme_minimal()
+
+```
+
+
+
+
+
+
 ## Problem 3
 
 
