@@ -1,0 +1,25 @@
+---
+title: "STATS 506 HW3"
+author: "Minxuan Chen"
+date: last-modified
+format:
+  pdf:
+    toc: true
+    number-sections: true
+    colorlinks: true
+  html:
+    toc: true
+    fig-align: "center"
+    fig-width: 8
+    fig-height: 6
+    embed-resources: true
+    format-links: false
+    execute:
+      warning: true
+      freeze: auto
+code-fold: show
+code-overflow: scroll
+code-line-numbers: true
+---
+Github repo: <https://github.com/PKUniiiiice/STATS_506>
+
