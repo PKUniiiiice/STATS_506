@@ -372,5 +372,104 @@ end of do-file
 
 ## Problem 2 Sakila
 ### (a)
+```{r p2a}
+library(DBI)
+library(RSQLite)
+sakila <- dbConnect(RSQLite::SQLite(), "sakila_working.db")
+
+#list tables contained in the database
+dbListTables(sakila)
+
+#Aside from English, what language is most common for films?
+dbGetQuery(sakila, "
+SELECT b.name as name, COUNT(*) as film_num
+  FROM film a
+    LEFT JOIN language b ON a.language_id = b.language_id
+  WHERE b.name <> 'English'
+  GROUP BY b.name
+  ORDER BY -film_num
+  LIMIT 1
+")
+```
+
+### (b)
+
+```{r p2b}
+#SQL+R
+film_cat <- dbReadTable(sakila, "film_category")
+category <- dbReadTable(sakila, "category")
+
+#merge two dataframe by category_id
+t1 <- merge(film_cat, category, by=c("category_id"))
+
+#aggregate to count how many
+result <- aggregate(film_id ~ name, data = t1,
+                    FUN = function(x) length(unique(x)))
+#sort to get the most common
+result <- result[order(result$film_id, decreasing=TRUE), ]
+result
+
+#pure SQL
+dbGetQuery(sakila, "
+SELECT b.name as name, COUNT(distinct film_id) as movie_nums
+  FROM film_category a
+    LEFT JOIN category b ON a.category_id = b.category_id
+  GROUP BY b.name
+  ORDER BY -movie_nums
+")
+```
+Sports is the most common genre in the data, it contains 74 movies.
+
+### (c)
+```{r p2c}
+#SQL+R
+customer <- dbReadTable(sakila, "customer")
+address <- dbReadTable(sakila, "address")
+city <- dbReadTable(sakila, "city")
+country <- dbReadTable(sakila, "country")
+
+t2 <- merge(customer, address, by="address_id", all.x=TRUE)
+t2 <- merge(t2, subset(city, select=-`last_update`),
+            by="city_id", all.x=TRUE)
+t2 <- merge(t2, subset(country, select=-`last_update`),
+            by="country_id", all.x=TRUE)
+
+#aggregate to count how many customers
+result2 <- aggregate(customer_id ~ country, data = t2,
+                    FUN = function(x) length(unique(x)))
+#Identify which country or countries have exactly 9 customers
+result2[result2$customer_id == 9, ]
+
+#pure SQL
+dbGetQuery(sakila, "
+SELECT cty.country as country, COUNT(distinct cus.customer_id) as cus_nums
+  FROM customer cus
+    LEFT JOIN address addr ON cus.address_id = addr.address_id
+    LEFT JOIN city on addr.city_id = city.city_id
+    LEFT JOIN country cty on city.country_id = cty.country_id
+  GROUP BY cty.country
+  HAVING COUNT(distinct cus.customer_id) = 9
+")
+```
+
+United Kingdom has exactly 9 customers.
+
+## Problem 3 US Records
+### (a)
+```{r p3a}
+us_500 <- read.csv("us-500.csv")
+
+
+
+
+```
+
+
+
+
+
+
+
+
 
 
