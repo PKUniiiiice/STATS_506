@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Minxuan Chen">
-<meta name="dcterms.date" content="2023-10-01">
+<meta name="dcterms.date" content="2023-10-02">
 
 <title>STATS 506 HW3</title>
 <style>
@@ -3032,6 +3032,21 @@ vertical-align: -.125em;
   <li><a href="#c" id="toc-c" class="nav-link" data-scroll-target="#c">(c)</a></li>
   <li><a href="#d" id="toc-d" class="nav-link" data-scroll-target="#d">(d)</a></li>
   </ul></li>
+  <li><a href="#problem-2-sakila" id="toc-problem-2-sakila" class="nav-link" data-scroll-target="#problem-2-sakila">Problem 2 Sakila</a>
+  <ul class="collapse">
+  <li><a href="#a-1" id="toc-a-1" class="nav-link" data-scroll-target="#a-1">(a)</a></li>
+  <li><a href="#b-1" id="toc-b-1" class="nav-link" data-scroll-target="#b-1">(b)</a></li>
+  <li><a href="#c-1" id="toc-c-1" class="nav-link" data-scroll-target="#c-1">(c)</a></li>
+  </ul></li>
+  <li><a href="#problem-3-us-records" id="toc-problem-3-us-records" class="nav-link" data-scroll-target="#problem-3-us-records">Problem 3 US Records</a>
+  <ul class="collapse">
+  <li><a href="#a-2" id="toc-a-2" class="nav-link" data-scroll-target="#a-2">(a)</a></li>
+  <li><a href="#b-2" id="toc-b-2" class="nav-link" data-scroll-target="#b-2">(b)</a></li>
+  <li><a href="#c-2" id="toc-c-2" class="nav-link" data-scroll-target="#c-2">(c)</a></li>
+  <li><a href="#d-1" id="toc-d-1" class="nav-link" data-scroll-target="#d-1">(d)</a></li>
+  <li><a href="#e" id="toc-e" class="nav-link" data-scroll-target="#e">(e)</a></li>
+  <li><a href="#f" id="toc-f" class="nav-link" data-scroll-target="#f">(f)</a></li>
+  </ul></li>
   </ul>
 </nav>
 </div>
@@ -3056,7 +3071,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">October 1, 2023</p>
+      <p class="date">October 2, 2023</p>
     </div>
   </div>
   
@@ -3369,7 +3384,7 @@ vertical-align: -.125em;
 </section>
 <section id="d" class="level3">
 <h3 class="anchored" data-anchor-id="d">(d)</h3>
-<p>In the output table, the odds ratio of Gender=2 is significant, therefore, the odds of men and women being wears of glasses/contact lenses for distance vision differs.</p>
+<p>In the output table, the odds ratio of <code>Gender=2</code> is significant, therefore, the odds of men and women being wears of glasses/contact lenses for distance vision differs.</p>
 <p>From the chi-squared test result, p-value is 0.000, therefore we conclude that gender and wearing or not are not independent, in other words, the proportion of wearers of glasses/contact lenses for distance vision differs between men and women.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode numberSource stata number-lines code-with-copy"><code class="sourceCode stata"><span id="cb4-1"><a href="#cb4-1"></a>. <span class="co">//Part d ---------------------------------------------------------------------</span></span>
 <span id="cb4-2"><a href="#cb4-2"></a></span>
@@ -3404,6 +3419,326 @@ vertical-align: -.125em;
 <span id="cb4-31"><a href="#cb4-31"></a>. <span class="co">//End of Part d --------------------------------------------------------------</span></span>
 <span id="cb4-32"><a href="#cb4-32"></a></span>
 <span id="cb4-33"><a href="#cb4-33"></a><span class="kw">end</span> <span class="kw">of</span> <span class="kw">do</span>-file</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+</section>
+<section id="problem-2-sakila" class="level2">
+<h2 class="anchored" data-anchor-id="problem-2-sakila">Problem 2 Sakila</h2>
+<section id="a-1" class="level3">
+<h3 class="anchored" data-anchor-id="a-1">(a)</h3>
+<div class="cell">
+<details open>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="fu">library</span>(DBI)</span>
+<span id="cb5-2"><a href="#cb5-2"></a><span class="fu">library</span>(RSQLite)</span>
+<span id="cb5-3"><a href="#cb5-3"></a>sakila <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(RSQLite<span class="sc">::</span><span class="fu">SQLite</span>(), <span class="st">&quot;sakila_working.db&quot;</span>)</span>
+<span id="cb5-4"><a href="#cb5-4"></a></span>
+<span id="cb5-5"><a href="#cb5-5"></a><span class="co">#list tables contained in the database</span></span>
+<span id="cb5-6"><a href="#cb5-6"></a><span class="fu">dbListTables</span>(sakila)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] &quot;actor&quot;                  &quot;address&quot;                &quot;category&quot;              
+ [4] &quot;city&quot;                   &quot;country&quot;                &quot;customer&quot;              
+ [7] &quot;customer_list&quot;          &quot;film&quot;                   &quot;film_actor&quot;            
+[10] &quot;film_category&quot;          &quot;film_list&quot;              &quot;film_text&quot;             
+[13] &quot;inventory&quot;              &quot;language&quot;               &quot;payment&quot;               
+[16] &quot;rental&quot;                 &quot;sales_by_film_category&quot; &quot;sales_by_store&quot;        
+[19] &quot;staff&quot;                  &quot;staff_list&quot;             &quot;store&quot;                 </code></pre>
+</div>
+<details open>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="co">#Aside from English, what language is most common for films?</span></span>
+<span id="cb7-2"><a href="#cb7-2"></a><span class="fu">dbGetQuery</span>(sakila, <span class="st">&quot;</span></span>
+<span id="cb7-3"><a href="#cb7-3"></a><span class="st">SELECT b.name as name, COUNT(*) as film_num</span></span>
+<span id="cb7-4"><a href="#cb7-4"></a><span class="st">  FROM film a</span></span>
+<span id="cb7-5"><a href="#cb7-5"></a><span class="st">    LEFT JOIN language b ON a.language_id = b.language_id</span></span>
+<span id="cb7-6"><a href="#cb7-6"></a><span class="st">  WHERE b.name &lt;&gt; &#39;English&#39;</span></span>
+<span id="cb7-7"><a href="#cb7-7"></a><span class="st">  GROUP BY b.name</span></span>
+<span id="cb7-8"><a href="#cb7-8"></a><span class="st">  ORDER BY -film_num</span></span>
+<span id="cb7-9"><a href="#cb7-9"></a><span class="st">  LIMIT 1</span></span>
+<span id="cb7-10"><a href="#cb7-10"></a><span class="st">&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] name     film_num
+&lt;0 rows&gt; (or 0-length row.names)</code></pre>
+</div>
+</div>
+</section>
+<section id="b-1" class="level3">
+<h3 class="anchored" data-anchor-id="b-1">(b)</h3>
+<div class="cell">
+<details open>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="co">#SQL+R</span></span>
+<span id="cb9-2"><a href="#cb9-2"></a>film_cat <span class="ot">&lt;-</span> <span class="fu">dbReadTable</span>(sakila, <span class="st">&quot;film_category&quot;</span>)</span>
+<span id="cb9-3"><a href="#cb9-3"></a>category <span class="ot">&lt;-</span> <span class="fu">dbReadTable</span>(sakila, <span class="st">&quot;category&quot;</span>)</span>
+<span id="cb9-4"><a href="#cb9-4"></a></span>
+<span id="cb9-5"><a href="#cb9-5"></a><span class="co">#merge two dataframe by category_id</span></span>
+<span id="cb9-6"><a href="#cb9-6"></a>t1 <span class="ot">&lt;-</span> <span class="fu">merge</span>(film_cat, category, <span class="at">by=</span><span class="fu">c</span>(<span class="st">&quot;category_id&quot;</span>))</span>
+<span id="cb9-7"><a href="#cb9-7"></a></span>
+<span id="cb9-8"><a href="#cb9-8"></a><span class="co">#aggregate to count how many</span></span>
+<span id="cb9-9"><a href="#cb9-9"></a>result <span class="ot">&lt;-</span> <span class="fu">aggregate</span>(film_id <span class="sc">~</span> name, <span class="at">data =</span> t1,</span>
+<span id="cb9-10"><a href="#cb9-10"></a>                    <span class="at">FUN =</span> <span class="cf">function</span>(x) <span class="fu">length</span>(<span class="fu">unique</span>(x)))</span>
+<span id="cb9-11"><a href="#cb9-11"></a><span class="co">#sort to get the most common</span></span>
+<span id="cb9-12"><a href="#cb9-12"></a>result <span class="ot">&lt;-</span> result[<span class="fu">order</span>(result<span class="sc">$</span>film_id, <span class="at">decreasing=</span><span class="cn">TRUE</span>), ]</span>
+<span id="cb9-13"><a href="#cb9-13"></a>result</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>          name film_id
+15      Sports      74
+9      Foreign      73
+8       Family      69
+6  Documentary      68
+2    Animation      66
+1       Action      64
+13         New      63
+7        Drama      62
+10       Games      61
+14      Sci-Fi      61
+3     Children      60
+5       Comedy      58
+4     Classics      57
+16      Travel      57
+11      Horror      56
+12       Music      51</code></pre>
+</div>
+<details open>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a><span class="co">#pure SQL</span></span>
+<span id="cb11-2"><a href="#cb11-2"></a><span class="fu">dbGetQuery</span>(sakila, <span class="st">&quot;</span></span>
+<span id="cb11-3"><a href="#cb11-3"></a><span class="st">SELECT b.name as name, COUNT(distinct film_id) as movie_nums</span></span>
+<span id="cb11-4"><a href="#cb11-4"></a><span class="st">  FROM film_category a</span></span>
+<span id="cb11-5"><a href="#cb11-5"></a><span class="st">    LEFT JOIN category b ON a.category_id = b.category_id</span></span>
+<span id="cb11-6"><a href="#cb11-6"></a><span class="st">  GROUP BY b.name</span></span>
+<span id="cb11-7"><a href="#cb11-7"></a><span class="st">  ORDER BY -movie_nums</span></span>
+<span id="cb11-8"><a href="#cb11-8"></a><span class="st">&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>          name movie_nums
+1       Sports         74
+2      Foreign         73
+3       Family         69
+4  Documentary         68
+5    Animation         66
+6       Action         64
+7          New         63
+8        Drama         62
+9        Games         61
+10      Sci-Fi         61
+11    Children         60
+12      Comedy         58
+13    Classics         57
+14      Travel         57
+15      Horror         56
+16       Music         51</code></pre>
+</div>
+</div>
+<p>Sports is the most common genre in the data, it contains 74 movies.</p>
+</section>
+<section id="c-1" class="level3">
+<h3 class="anchored" data-anchor-id="c-1">(c)</h3>
+<div class="cell">
+<details open>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a><span class="co">#SQL+R</span></span>
+<span id="cb13-2"><a href="#cb13-2"></a>customer <span class="ot">&lt;-</span> <span class="fu">dbReadTable</span>(sakila, <span class="st">&quot;customer&quot;</span>)</span>
+<span id="cb13-3"><a href="#cb13-3"></a>address <span class="ot">&lt;-</span> <span class="fu">dbReadTable</span>(sakila, <span class="st">&quot;address&quot;</span>)</span>
+<span id="cb13-4"><a href="#cb13-4"></a>city <span class="ot">&lt;-</span> <span class="fu">dbReadTable</span>(sakila, <span class="st">&quot;city&quot;</span>)</span>
+<span id="cb13-5"><a href="#cb13-5"></a>country <span class="ot">&lt;-</span> <span class="fu">dbReadTable</span>(sakila, <span class="st">&quot;country&quot;</span>)</span>
+<span id="cb13-6"><a href="#cb13-6"></a></span>
+<span id="cb13-7"><a href="#cb13-7"></a>t2 <span class="ot">&lt;-</span> <span class="fu">merge</span>(customer, address, <span class="at">by=</span><span class="st">&quot;address_id&quot;</span>, <span class="at">all.x=</span><span class="cn">TRUE</span>)</span>
+<span id="cb13-8"><a href="#cb13-8"></a>t2 <span class="ot">&lt;-</span> <span class="fu">merge</span>(t2, <span class="fu">subset</span>(city, <span class="at">select=</span><span class="sc">-</span><span class="st">`</span><span class="at">last_update</span><span class="st">`</span>),</span>
+<span id="cb13-9"><a href="#cb13-9"></a>            <span class="at">by=</span><span class="st">&quot;city_id&quot;</span>, <span class="at">all.x=</span><span class="cn">TRUE</span>)</span>
+<span id="cb13-10"><a href="#cb13-10"></a>t2 <span class="ot">&lt;-</span> <span class="fu">merge</span>(t2, <span class="fu">subset</span>(country, <span class="at">select=</span><span class="sc">-</span><span class="st">`</span><span class="at">last_update</span><span class="st">`</span>),</span>
+<span id="cb13-11"><a href="#cb13-11"></a>            <span class="at">by=</span><span class="st">&quot;country_id&quot;</span>, <span class="at">all.x=</span><span class="cn">TRUE</span>)</span>
+<span id="cb13-12"><a href="#cb13-12"></a></span>
+<span id="cb13-13"><a href="#cb13-13"></a><span class="co">#aggregate to count how many customers</span></span>
+<span id="cb13-14"><a href="#cb13-14"></a>result2 <span class="ot">&lt;-</span> <span class="fu">aggregate</span>(customer_id <span class="sc">~</span> country, <span class="at">data =</span> t2,</span>
+<span id="cb13-15"><a href="#cb13-15"></a>                    <span class="at">FUN =</span> <span class="cf">function</span>(x) <span class="fu">length</span>(<span class="fu">unique</span>(x)))</span>
+<span id="cb13-16"><a href="#cb13-16"></a><span class="co">#Identify which country or countries have exactly 9 customers</span></span>
+<span id="cb13-17"><a href="#cb13-17"></a>result2[result2<span class="sc">$</span>customer_id <span class="sc">==</span> <span class="dv">9</span>, ]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>           country customer_id
+101 United Kingdom           9</code></pre>
+</div>
+<details open>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a><span class="co">#pure SQL</span></span>
+<span id="cb15-2"><a href="#cb15-2"></a><span class="fu">dbGetQuery</span>(sakila, <span class="st">&quot;</span></span>
+<span id="cb15-3"><a href="#cb15-3"></a><span class="st">SELECT cty.country as country, COUNT(distinct cus.customer_id) as cus_nums</span></span>
+<span id="cb15-4"><a href="#cb15-4"></a><span class="st">  FROM customer cus</span></span>
+<span id="cb15-5"><a href="#cb15-5"></a><span class="st">    LEFT JOIN address addr ON cus.address_id = addr.address_id</span></span>
+<span id="cb15-6"><a href="#cb15-6"></a><span class="st">    LEFT JOIN city on addr.city_id = city.city_id</span></span>
+<span id="cb15-7"><a href="#cb15-7"></a><span class="st">    LEFT JOIN country cty on city.country_id = cty.country_id</span></span>
+<span id="cb15-8"><a href="#cb15-8"></a><span class="st">  GROUP BY cty.country</span></span>
+<span id="cb15-9"><a href="#cb15-9"></a><span class="st">  HAVING COUNT(distinct cus.customer_id) = 9</span></span>
+<span id="cb15-10"><a href="#cb15-10"></a><span class="st">&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>         country cus_nums
+1 United Kingdom        9</code></pre>
+</div>
+</div>
+<p>United Kingdom has exactly 9 customers.</p>
+</section>
+</section>
+<section id="problem-3-us-records" class="level2">
+<h2 class="anchored" data-anchor-id="problem-3-us-records">Problem 3 US Records</h2>
+<section id="a-2" class="level3">
+<h3 class="anchored" data-anchor-id="a-2">(a)</h3>
+<div class="cell">
+<details open>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a><span class="fu">library</span>(stringr)</span>
+<span id="cb17-2"><a href="#cb17-2"></a>us_500 <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;us-500.csv&quot;</span>)</span>
+<span id="cb17-3"><a href="#cb17-3"></a></span>
+<span id="cb17-4"><a href="#cb17-4"></a><span class="co">#proportion of email addresses are hosted at a domain with TLD “.net”?</span></span>
+<span id="cb17-5"><a href="#cb17-5"></a><span class="fu">mean</span>(<span class="fu">str_detect</span>(us_500<span class="sc">$</span>email, <span class="st">&quot;@</span><span class="sc">\\</span><span class="st">w*</span><span class="sc">\\</span><span class="st">.net&quot;</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.14</code></pre>
+</div>
+</div>
+<p>14% email addresses are hosted at a domain with TLD “.net”.</p>
+</section>
+<section id="b-2" class="level3">
+<h3 class="anchored" data-anchor-id="b-2">(b)</h3>
+<div class="cell">
+<details open>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1"></a><span class="co">#What proportion of email addresses have at least one non alphanumeric character</span></span>
+<span id="cb19-2"><a href="#cb19-2"></a><span class="co">#the non alphanumeric occurs in two case, before @ or after @</span></span>
+<span id="cb19-3"><a href="#cb19-3"></a><span class="co">#before @ can be .</span></span>
+<span id="cb19-4"><a href="#cb19-4"></a><span class="co">#after @, can&#39;t be .</span></span>
+<span id="cb19-5"><a href="#cb19-5"></a><span class="fu">mean</span>(<span class="fu">str_detect</span>(us_500<span class="sc">$</span>email,</span>
+<span id="cb19-6"><a href="#cb19-6"></a>                <span class="st">&quot;(^.*[^[:alnum:]]+.*@|@.*[^[:alnum:]@</span><span class="sc">\\</span><span class="st">.]+.*$)&quot;</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.506</code></pre>
+</div>
+</div>
+<p>50.6% email addresses have at least one non alphanumeric character in them.</p>
+</section>
+<section id="c-2" class="level3">
+<h3 class="anchored" data-anchor-id="c-2">(c)</h3>
+<div class="cell">
+<details open>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1"></a><span class="co">#all phone numbers</span></span>
+<span id="cb21-2"><a href="#cb21-2"></a>phone_num <span class="ot">&lt;-</span> <span class="fu">c</span>(us_500<span class="sc">$</span>phone1, us_500<span class="sc">$</span>phone2)</span>
+<span id="cb21-3"><a href="#cb21-3"></a></span>
+<span id="cb21-4"><a href="#cb21-4"></a><span class="co">#extract area code</span></span>
+<span id="cb21-5"><a href="#cb21-5"></a>phone_num <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(<span class="fu">unname</span>(<span class="fu">sapply</span>(phone_num,</span>
+<span id="cb21-6"><a href="#cb21-6"></a>                                     <span class="cf">function</span>(x) <span class="fu">substr</span>(x,<span class="dv">1</span>,<span class="dv">3</span>))))</span>
+<span id="cb21-7"><a href="#cb21-7"></a></span>
+<span id="cb21-8"><a href="#cb21-8"></a>most_com_area <span class="ot">&lt;-</span> <span class="fu">names</span>(<span class="fu">sort</span>(<span class="fu">table</span>(phone_num), <span class="at">decreasing =</span> <span class="cn">TRUE</span>)[<span class="dv">1</span>])</span>
+<span id="cb21-9"><a href="#cb21-9"></a>most_com_area</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] &quot;973&quot;</code></pre>
+</div>
+</div>
+<p>The most common area code amongst all phone numbers is “973”.</p>
+</section>
+<section id="d-1" class="level3">
+<h3 class="anchored" data-anchor-id="d-1">(d)</h3>
+<div class="cell">
+<details open>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1"></a><span class="co">#we first remove all leading/trailing whitespace</span></span>
+<span id="cb23-2"><a href="#cb23-2"></a>addr <span class="ot">&lt;-</span> <span class="fu">trimws</span>(us_500<span class="sc">$</span>address)</span>
+<span id="cb23-3"><a href="#cb23-3"></a><span class="co">#pattern</span></span>
+<span id="cb23-4"><a href="#cb23-4"></a><span class="co">#after observation, either #number or &#39; num &#39; </span></span>
+<span id="cb23-5"><a href="#cb23-5"></a><span class="co"># we prioritize match &#39;#number&#39;, if don&#39;t match, then we match &#39; num &#39;</span></span>
+<span id="cb23-6"><a href="#cb23-6"></a></span>
+<span id="cb23-7"><a href="#cb23-7"></a><span class="co">#first</span></span>
+<span id="cb23-8"><a href="#cb23-8"></a>pat <span class="ot">&lt;-</span> <span class="st">&quot;(?&lt;=#)</span><span class="sc">\\</span><span class="st">d+$&quot;</span></span>
+<span id="cb23-9"><a href="#cb23-9"></a>m1 <span class="ot">&lt;-</span> <span class="fu">str_extract</span>(addr, pat)</span>
+<span id="cb23-10"><a href="#cb23-10"></a></span>
+<span id="cb23-11"><a href="#cb23-11"></a><span class="co">#second </span></span>
+<span id="cb23-12"><a href="#cb23-12"></a>pat <span class="ot">&lt;-</span> <span class="st">&quot;(?&lt;!^)(?&lt;=[:alpha:] )</span><span class="sc">\\</span><span class="st">d+</span><span class="sc">\\</span><span class="st">b&quot;</span></span>
+<span id="cb23-13"><a href="#cb23-13"></a>m2 <span class="ot">&lt;-</span> <span class="fu">str_extract</span>(addr[<span class="fu">is.na</span>(m1)], pat)</span>
+<span id="cb23-14"><a href="#cb23-14"></a></span>
+<span id="cb23-15"><a href="#cb23-15"></a><span class="co">#exception</span></span>
+<span id="cb23-16"><a href="#cb23-16"></a><span class="co">#&quot;83 County Road 437 #8581&quot; </span></span>
+<span id="cb23-17"><a href="#cb23-17"></a><span class="co">#&quot;9 State Highway 57 #22&quot;  </span></span>
+<span id="cb23-18"><a href="#cb23-18"></a><span class="co">#Although according to the question requirements, 437 and 57 are also APT number, however, according to common sense, they are not.</span></span>
+<span id="cb23-19"><a href="#cb23-19"></a></span>
+<span id="cb23-20"><a href="#cb23-20"></a><span class="co">#now we combine m1 and m2</span></span>
+<span id="cb23-21"><a href="#cb23-21"></a>match <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(<span class="fu">c</span>(m1[<span class="sc">!</span><span class="fu">is.na</span>(m1)], m2[<span class="sc">!</span><span class="fu">is.na</span>(m2)]))</span>
+<span id="cb23-22"><a href="#cb23-22"></a><span class="fu">hist</span>(<span class="fu">log</span>(match))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="data:image/png;base64,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" class="img-fluid" width="768"></p>
+</div>
+</div>
+</section>
+<section id="e" class="level3">
+<h3 class="anchored" data-anchor-id="e">(e)</h3>
+<div class="cell">
+<details open>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1"></a><span class="co">#extract leading digit</span></span>
+<span id="cb24-2"><a href="#cb24-2"></a>match_lead <span class="ot">&lt;-</span> match <span class="sc">%/%</span> <span class="dv">10</span><span class="sc">^</span>(<span class="fu">floor</span>(<span class="fu">log10</span>(match)))</span>
+<span id="cb24-3"><a href="#cb24-3"></a></span>
+<span id="cb24-4"><a href="#cb24-4"></a><span class="co">#we use empirical distribution to estimate real distribution</span></span>
+<span id="cb24-5"><a href="#cb24-5"></a>hat_lead_prob <span class="ot">&lt;-</span> <span class="fu">table</span>(<span class="fu">as.factor</span>(match_lead))<span class="sc">/</span><span class="fu">length</span>(match_lead)</span>
+<span id="cb24-6"><a href="#cb24-6"></a>hat_lead_prob</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+         1          2          3          4          5          6          7 
+0.12396694 0.10743802 0.10743802 0.11570248 0.12396694 0.09090909 0.09917355 
+         8          9 
+0.09090909 0.14049587 </code></pre>
+</div>
+<details open>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1"></a>thy_prob <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">c</span>(<span class="fu">log10</span>(<span class="dv">1</span><span class="sc">+</span><span class="dv">1</span><span class="sc">/</span><span class="dv">1</span><span class="sc">:</span><span class="dv">9</span>)),<span class="dv">1</span><span class="sc">:</span><span class="dv">9</span>)</span>
+<span id="cb26-2"><a href="#cb26-2"></a>thy_prob</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>         1          2          3          4          5          6          7 
+0.30103000 0.17609126 0.12493874 0.09691001 0.07918125 0.06694679 0.05799195 
+         8          9 
+0.05115252 0.04575749 </code></pre>
+</div>
+</div>
+<p>It seems that these two distributions are different, so we think the apartment numbers don’t appear to follow Benford’s law. Therefore, they would not pass as real data.</p>
+</section>
+<section id="f" class="level3">
+<h3 class="anchored" data-anchor-id="f">(f)</h3>
+<div class="cell">
+<details open>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1"></a><span class="co">#we extract the starting digits as the street number</span></span>
+<span id="cb28-2"><a href="#cb28-2"></a>pat <span class="ot">&lt;-</span> <span class="st">&quot;^</span><span class="sc">\\</span><span class="st">d+</span><span class="sc">\\</span><span class="st">b&quot;</span></span>
+<span id="cb28-3"><a href="#cb28-3"></a>st_no <span class="ot">&lt;-</span> <span class="fu">str_extract</span>(addr, pat)</span>
+<span id="cb28-4"><a href="#cb28-4"></a></span>
+<span id="cb28-5"><a href="#cb28-5"></a><span class="co">#extract last digit</span></span>
+<span id="cb28-6"><a href="#cb28-6"></a>st_no_last <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(st_no) <span class="sc">%%</span> <span class="dv">10</span></span>
+<span id="cb28-7"><a href="#cb28-7"></a></span>
+<span id="cb28-8"><a href="#cb28-8"></a><span class="co">#we use empirical distribution to estimate real distribution</span></span>
+<span id="cb28-9"><a href="#cb28-9"></a>stno_prob <span class="ot">&lt;-</span> <span class="fu">table</span>(<span class="fu">as.factor</span>(st_no_last))<span class="sc">/</span><span class="fu">length</span>(st_no_last)</span>
+<span id="cb28-10"><a href="#cb28-10"></a>stno_prob[<span class="sc">-</span><span class="dv">1</span>] <span class="co">#remove 0</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    1     2     3     4     5     6     7     8     9 
+0.082 0.108 0.102 0.106 0.104 0.086 0.112 0.090 0.132 </code></pre>
+</div>
+<details open>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1"></a>thy_prob</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>         1          2          3          4          5          6          7 
+0.30103000 0.17609126 0.12493874 0.09691001 0.07918125 0.06694679 0.05799195 
+         8          9 
+0.05115252 0.04575749 </code></pre>
+</div>
+</div>
+<p>It seems that these two distributions are different, so we think the street numbers don’t appear to follow Benford’s law. Therefore, they would not pass as real data.</p>
 </section>
 </section>
 

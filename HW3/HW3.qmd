@@ -457,17 +457,97 @@ United Kingdom has exactly 9 customers.
 ## Problem 3 US Records
 ### (a)
 ```{r p3a}
+library(stringr)
 us_500 <- read.csv("us-500.csv")
 
+#proportion of email addresses are hosted at a domain with TLD “.net”?
+mean(str_detect(us_500$email, "@\\w*\\.net"))
+```
+14\% email addresses are hosted at a domain with TLD ".net".
 
+### (b)
+```{r p3b}
+#What proportion of email addresses have at least one non alphanumeric character
+#the non alphanumeric occurs in two case, before @ or after @
+#before @ can be .
+#after @, can't be .
+mean(str_detect(us_500$email,
+                "(^.*[^[:alnum:]]+.*@|@.*[^[:alnum:]@\\.]+.*$)"))
+```
+50.6\% email addresses have at least one non alphanumeric character in them.
 
+### (c)
+```{r p3c}
+#all phone numbers
+phone_num <- c(us_500$phone1, us_500$phone2)
 
+#extract area code
+phone_num <- as.factor(unname(sapply(phone_num,
+                                     function(x) substr(x,1,3))))
+
+most_com_area <- names(sort(table(phone_num), decreasing = TRUE)[1])
+most_com_area
+```
+The most common area code amongst all phone numbers is "973".
+
+### (d)
+```{r p3d}
+#we first remove all leading/trailing whitespace
+addr <- trimws(us_500$address)
+#pattern
+#after observation, either #number or ' num ' 
+# we prioritize match '#number', if don't match, then we match ' num '
+
+#first
+pat <- "(?<=#)\\d+$"
+m1 <- str_extract(addr, pat)
+
+#second 
+pat <- "(?<!^)(?<=[:alpha:] )\\d+\\b"
+m2 <- str_extract(addr[is.na(m1)], pat)
+
+#exception
+#"83 County Road 437 #8581" 
+#"9 State Highway 57 #22"  
+#Although according to the question requirements, 437 and 57 are also APT number, however, according to common sense, they are not.
+
+#now we combine m1 and m2
+match <- as.integer(c(m1[!is.na(m1)], m2[!is.na(m2)]))
+hist(log(match))
 ```
 
+### (e)
+```{r p3e}
+#extract leading digit
+match_lead <- match %/% 10^(floor(log10(match)))
 
+#we use empirical distribution to estimate real distribution
+hat_lead_prob <- table(as.factor(match_lead))/length(match_lead)
+hat_lead_prob
 
+thy_prob <- setNames(c(log10(1+1/1:9)),1:9)
+thy_prob
+```
 
+It seems that these two distributions are different, so we think the apartment numbers don't appear to follow Benford's law. Therefore, they would not pass as real data.
 
+### (f)
+```{r p3f}
+#we extract the starting digits as the street number
+pat <- "^\\d+\\b"
+st_no <- str_extract(addr, pat)
+
+#extract last digit
+st_no_last <- as.integer(st_no) %% 10
+
+#we use empirical distribution to estimate real distribution
+stno_prob <- table(as.factor(st_no_last))/length(st_no_last)
+stno_prob[-1] #remove 0
+
+thy_prob
+```
+
+It seems that these two distributions are different, so we think the street numbers don't appear to follow Benford's law. Therefore, they would not pass as real data.
 
 
 
