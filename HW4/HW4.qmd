@@ -1,0 +1,171 @@
+---
+title: "STATS 506 HW4"
+author: "Minxuan Chen"
+date: last-modified
+format:
+  pdf:
+    toc: true
+    number-sections: true
+    colorlinks: true
+  html:
+    toc: true
+    fig-align: "center"
+    fig-width: 8
+    fig-height: 6
+    embed-resources: true
+    format-links: false
+    execute:
+      warning: true
+      freeze: auto
+code-fold: show
+code-overflow: scroll
+code-line-numbers: true
+---
+Github repo: <https://github.com/PKUniiiiice/STATS_506>
+
+## Problem 1 
+### (a)
+```{r , warning=FALSE}
+library(nycflights13)
+library(tidyverse)
+data("airlines","airports", "flights", "planes", "weather")
+```
+
+```{r p1aa}
+#left join flights and airports to get airport
+t1 <- left_join(flights, airports, by=join_by(`origin` == `faa`))
+
+#define a function at first
+delay_smy <- function(data) {
+  data %>%
+    group_by(name) %>%
+    summarise(
+      Mean_dep_delay = mean(dep_delay, na.rm = TRUE),
+      Median_dep_delay = median(dep_delay, na.rm = TRUE)
+    ) %>%
+    ungroup()
+}
+#Generate a table (which can just be a nicely printed tibble) reporting the mean and median departure delay per airport.
+smy1 <- flights %>% 
+        left_join(airports, by=c("origin" = "faa")) %>% 
+        delay_smy() %>% 
+        arrange(desc(Mean_dep_delay)) %>% 
+        na.omit() %>% 
+        print(n = Inf)
+
+#Generate a second table (which again can be a nicely printed tibble) reporting the mean and median arrival delay per airport.
+#we use filter to exclude
+smy2 <- flights %>% 
+        left_join(airports, by=c("dest" = "faa")) %>% 
+        delay_smy() %>% 
+        filter(n()>=10) %>% 
+        arrange(desc(Mean_dep_delay)) %>% 
+        na.omit() %>% 
+        print(n = Inf)
+
+```
+
+### (b)
+
+```{r p1b}
+#find the fastest speed model
+fastest <- planes %>% 
+      group_by(model) %>% 
+      summarise(
+        avg_speed = mean(speed, na.rm=TRUE)
+      ) %>% 
+      ungroup() %>% 
+      arrange(desc(avg_speed)) %>% 
+      slice(1)
+
+#use fatest to filter
+sym3 <- flights %>% 
+        left_join(planes, by=c("tailnum")) %>% 
+        inner_join(fastest, by="model") %>% 
+        group_by(model) %>% 
+        summarise(
+          avg_speed = max(avg_speed),
+          n = n()
+        ) %>% 
+        print()
+```
+
+## Problem 2 
+```{r p2}
+nnmaps <- read.csv("./chicago-nmmaps-custom.csv", header=TRUE) %>% tibble()
+
+#' Allows a user to request the average temperature for a given month.
+#' 
+#' @param month Month, either a numeric 1-12 or a string.
+#' @param year A numeric year.
+#' @param data The data set to obtain data from.
+#' @param celsius Logically indicating whether the results should be in celsius. Default FALSE.
+#' @param average_fn A function with which to compute the mean. Default is mean.
+get_temp <- function(month, year, data, celsius=FALSE, average_fn=mean){
+
+  #check input -- month
+  if ( !(is.character(month) || is.numeric(month) ) )
+    stop("Month, either a numeric 1-12 or a string.")
+  else if (is.character(month)){
+    if (is.na( mat <- match(month, c(month.abb, month.name))))
+        stop("Month, either a numeric 1-12 or a string.")
+    else
+      month.clr <- ifelse(mat<13, mat, mat-12)
+  }
+  else{
+    if( !(month.clr <-month) %in% seq(1, 12))
+      stop("Month, either a numeric 1-12 or a string.")
+  }
+
+  #check input -- year
+  if ( ! (is.numeric(year) && (year>0) && (year%%1==0)))
+    stop("Year, must a positive numeric (integer) value.")
+  year.clr <- as.integer(year)
+  
+  #check input -- data
+  if (!is.data.frame(nnmaps))
+    stop("data, must be a data.frame or tibble.")
+  
+  #check input -- celsius
+  if (!is.logical(celsius))
+    stop("data, must be TRUE or FALSE")
+  
+  if (!is.function(average_fn))
+    stop("average_fn, must be a function")
+
+  out <- data %>% 
+         filter(month==month.abb[month.clr],
+                year==year.clr) %>% 
+         summarise(
+           temp = average_fn(temp)
+         ) %>% 
+         mutate(
+           celsius.avg = (temp-32)/1.8
+         ) %>% 
+         select(ifelse(celsius, 2, 1)) %>% 
+         pull()
+  if (is.na(out))
+    stop("Average temperature is NaN. 3 common reasons are
+         1. The requested data is missing in the dataset.
+         2. The specified year is out of the valid range.
+         3. There may be an issue with the customed average function.")
+  return (out)
+}
+
+#test
+try(get_temp("Apr", 1999, data = nnmaps))
+try(get_temp("Apr", 1999, data = nnmaps, celsius = TRUE))
+try(get_temp(10, 1998, data = nnmaps, average_fn = median))
+try(get_temp(13, 1998, data = nnmaps))
+try(get_temp(2, 2005, data = nnmaps))
+try(get_temp("November", 1999, data =nnmaps, celsius = TRUE,
+         average_fn = function(x) {
+           x %>% sort -> x
+           x[2:(length(x) - 1)] %>% mean %>% return
+         }))
+```
+
+
+
+
+
