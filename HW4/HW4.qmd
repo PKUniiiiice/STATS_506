@@ -36,20 +36,20 @@ data("airlines","airports", "flights", "planes", "weather")
 t1 <- left_join(flights, airports, by=join_by(`origin` == `faa`))
 
 #define a function at first
-delay_smy <- function(data) {
+delay_smy <- function(data, varb) {
   data %>%
     group_by(name) %>%
     summarise(
-      Mean_dep_delay = mean(dep_delay, na.rm = TRUE),
-      Median_dep_delay = median(dep_delay, na.rm = TRUE)
+      Mean_delay = mean({{varb}}, na.rm = TRUE),
+      Median_delay = median({{varb}}, na.rm = TRUE)
     ) %>%
     ungroup()
 }
 #Generate a table (which can just be a nicely printed tibble) reporting the mean and median departure delay per airport.
 smy1 <- flights %>% 
         left_join(airports, by=c("origin" = "faa")) %>% 
-        delay_smy() %>% 
-        arrange(desc(Mean_dep_delay)) %>% 
+        delay_smy(varb=`dep_delay`) %>% 
+        arrange(desc(Mean_delay)) %>% 
         na.omit() %>% 
         print(n = Inf)
 
@@ -57,9 +57,9 @@ smy1 <- flights %>%
 #we use filter to exclude
 smy2 <- flights %>% 
         left_join(airports, by=c("dest" = "faa")) %>% 
-        delay_smy() %>% 
+        delay_smy(varb=`arr_delay`) %>% 
         filter(n()>=10) %>% 
-        arrange(desc(Mean_dep_delay)) %>% 
+        arrange(desc(Mean_delay)) %>% 
         na.omit() %>% 
         print(n = Inf)
 
@@ -69,25 +69,24 @@ smy2 <- flights %>%
 
 ```{r p1b}
 #find the fastest speed model
-fastest <- planes %>% 
+# we should calculate the average speed manually, can't use the speed variable in table planes, since there are too many missing values in the column.
+# we use air time and distance in table flights to calculate average speed
+fastest <- flights %>% 
+      left_join(planes, by=c("tailnum")) %>% 
+      select(air_time, distance, model) %>% 
+      na.omit() %>% #filter missing at first
       group_by(model) %>% 
       summarise(
-        avg_speed = mean(speed, na.rm=TRUE)
+         air_time = sum(air_time, na.rm=TRUE)/60, #convert to hour
+         distance = sum(distance, na.rm=TRUE),
+         avg_speed = distance/air_time,
+         n = n()
       ) %>% 
       ungroup() %>% 
       arrange(desc(avg_speed)) %>% 
-      slice(1)
+      select(model, avg_speed, n) %>% 
+      print(n=1)
 
-#use fatest to filter
-sym3 <- flights %>% 
-        left_join(planes, by=c("tailnum")) %>% 
-        inner_join(fastest, by="model") %>% 
-        group_by(model) %>% 
-        summarise(
-          avg_speed = max(avg_speed),
-          n = n()
-        ) %>% 
-        print()
 ```
 
 ## Problem 2 

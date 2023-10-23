@@ -3228,30 +3228,30 @@ return!"\t\n\x0B\f\r                　\u2028\u2029
 <span id="cb4-2"><a href="#cb4-2"></a>t1 <span class="ot">&lt;-</span> <span class="fu">left_join</span>(flights, airports, <span class="at">by=</span><span class="fu">join_by</span>(<span class="st">`</span><span class="at">origin</span><span class="st">`</span> <span class="sc">==</span> <span class="st">`</span><span class="at">faa</span><span class="st">`</span>))</span>
 <span id="cb4-3"><a href="#cb4-3"></a></span>
 <span id="cb4-4"><a href="#cb4-4"></a><span class="co">#define a function at first</span></span>
-<span id="cb4-5"><a href="#cb4-5"></a>delay_smy <span class="ot">&lt;-</span> <span class="cf">function</span>(data) {</span>
+<span id="cb4-5"><a href="#cb4-5"></a>delay_smy <span class="ot">&lt;-</span> <span class="cf">function</span>(data, varb) {</span>
 <span id="cb4-6"><a href="#cb4-6"></a>  data <span class="sc">%&gt;%</span></span>
 <span id="cb4-7"><a href="#cb4-7"></a>    <span class="fu">group_by</span>(name) <span class="sc">%&gt;%</span></span>
 <span id="cb4-8"><a href="#cb4-8"></a>    <span class="fu">summarise</span>(</span>
-<span id="cb4-9"><a href="#cb4-9"></a>      <span class="at">Mean_dep_delay =</span> <span class="fu">mean</span>(dep_delay, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb4-10"><a href="#cb4-10"></a>      <span class="at">Median_dep_delay =</span> <span class="fu">median</span>(dep_delay, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb4-9"><a href="#cb4-9"></a>      <span class="at">Mean_delay =</span> <span class="fu">mean</span>({{varb}}, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb4-10"><a href="#cb4-10"></a>      <span class="at">Median_delay =</span> <span class="fu">median</span>({{varb}}, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb4-11"><a href="#cb4-11"></a>    ) <span class="sc">%&gt;%</span></span>
 <span id="cb4-12"><a href="#cb4-12"></a>    <span class="fu">ungroup</span>()</span>
 <span id="cb4-13"><a href="#cb4-13"></a>}</span>
 <span id="cb4-14"><a href="#cb4-14"></a><span class="co">#Generate a table (which can just be a nicely printed tibble) reporting the mean and median departure delay per airport.</span></span>
 <span id="cb4-15"><a href="#cb4-15"></a>smy1 <span class="ot">&lt;-</span> flights <span class="sc">%&gt;%</span> </span>
 <span id="cb4-16"><a href="#cb4-16"></a>        <span class="fu">left_join</span>(airports, <span class="at">by=</span><span class="fu">c</span>(<span class="st">&quot;origin&quot;</span> <span class="ot">=</span> <span class="st">&quot;faa&quot;</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb4-17"><a href="#cb4-17"></a>        <span class="fu">delay_smy</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb4-18"><a href="#cb4-18"></a>        <span class="fu">arrange</span>(<span class="fu">desc</span>(Mean_dep_delay)) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-17"><a href="#cb4-17"></a>        <span class="fu">delay_smy</span>(<span class="at">varb=</span><span class="st">`</span><span class="at">dep_delay</span><span class="st">`</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-18"><a href="#cb4-18"></a>        <span class="fu">arrange</span>(<span class="fu">desc</span>(Mean_delay)) <span class="sc">%&gt;%</span> </span>
 <span id="cb4-19"><a href="#cb4-19"></a>        <span class="fu">na.omit</span>() <span class="sc">%&gt;%</span> </span>
 <span id="cb4-20"><a href="#cb4-20"></a>        <span class="fu">print</span>(<span class="at">n =</span> <span class="cn">Inf</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 3 × 3
-  name                Mean_dep_delay Median_dep_delay
-  &lt;chr&gt;                        &lt;dbl&gt;            &lt;dbl&gt;
-1 Newark Liberty Intl           15.1               -1
-2 John F Kennedy Intl           12.1               -1
-3 La Guardia                    10.3               -3</code></pre>
+  name                Mean_delay Median_delay
+  &lt;chr&gt;                    &lt;dbl&gt;        &lt;dbl&gt;
+1 Newark Liberty Intl       15.1           -1
+2 John F Kennedy Intl       12.1           -1
+3 La Guardia                10.3           -3</code></pre>
 </div>
 <details open>
 <summary>Code</summary>
@@ -3259,116 +3259,116 @@ return!"\t\n\x0B\f\r                　\u2028\u2029
 <span id="cb6-2"><a href="#cb6-2"></a><span class="co">#we use filter to exclude</span></span>
 <span id="cb6-3"><a href="#cb6-3"></a>smy2 <span class="ot">&lt;-</span> flights <span class="sc">%&gt;%</span> </span>
 <span id="cb6-4"><a href="#cb6-4"></a>        <span class="fu">left_join</span>(airports, <span class="at">by=</span><span class="fu">c</span>(<span class="st">&quot;dest&quot;</span> <span class="ot">=</span> <span class="st">&quot;faa&quot;</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb6-5"><a href="#cb6-5"></a>        <span class="fu">delay_smy</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb6-5"><a href="#cb6-5"></a>        <span class="fu">delay_smy</span>(<span class="at">varb=</span><span class="st">`</span><span class="at">arr_delay</span><span class="st">`</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb6-6"><a href="#cb6-6"></a>        <span class="fu">filter</span>(<span class="fu">n</span>()<span class="sc">&gt;=</span><span class="dv">10</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb6-7"><a href="#cb6-7"></a>        <span class="fu">arrange</span>(<span class="fu">desc</span>(Mean_dep_delay)) <span class="sc">%&gt;%</span> </span>
+<span id="cb6-7"><a href="#cb6-7"></a>        <span class="fu">arrange</span>(<span class="fu">desc</span>(Mean_delay)) <span class="sc">%&gt;%</span> </span>
 <span id="cb6-8"><a href="#cb6-8"></a>        <span class="fu">na.omit</span>() <span class="sc">%&gt;%</span> </span>
 <span id="cb6-9"><a href="#cb6-9"></a>        <span class="fu">print</span>(<span class="at">n =</span> <span class="cn">Inf</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 100 × 3
-    name                                   Mean_dep_delay Median_dep_delay
-    &lt;chr&gt;                                           &lt;dbl&gt;            &lt;dbl&gt;
-  1 &quot;Columbia Metropolitan&quot;                         35.6              14  
-  2 &quot;Tulsa Intl&quot;                                    34.9               8  
-  3 &quot;Will Rogers World&quot;                             30.6              10  
-  4 &quot;Birmingham Intl&quot;                               29.7               1  
-  5 &quot;Mc Ghee Tyson&quot;                                 28.5               0  
-  6 &quot;Jackson Hole Airport&quot;                          26.5              13.5
-  7 &quot;Des Moines Intl&quot;                               26.2              -1  
-  8 &quot;Richmond Intl&quot;                                 23.6              -1  
-  9 &quot;Albany Intl&quot;                                   23.6               1  
- 10 &quot;Dane Co Rgnl Truax Fld&quot;                        23.6              -1  
- 11 &quot;Cherry Capital Airport&quot;                        22.1              -3  
- 12 &quot;Theodore Francis Green State&quot;                  21.8               0  
- 13 &quot;Charlottesville-Albemarle&quot;                     21.4              -2.5
- 14 &quot;South Bend Rgnl&quot;                               21.1              14  
- 15 &quot;Manchester Regional Airport&quot;                   21.0               0  
- 16 &quot;Akron Canton Regional Airport&quot;                 20.8               0  
- 17 &quot;San Antonio Intl&quot;                              20.7               1  
- 18 &quot;Kansas City Intl&quot;                              20.3              -1  
- 19 &quot;Eppley Afld&quot;                                   20.2              -1  
- 20 &quot;Gerald R Ford Intl&quot;                            19.5              -1  
- 21 &quot;Cincinnati Northern Kentucky Intl&quot;             19.5              -2  
- 22 &quot;Bangor Intl&quot;                                   19.5              -2  
- 23 &quot;Wilmington Intl&quot;                               19.4              -3  
- 24 &quot;Piedmont Triad&quot;                                19.4              -1  
- 25 &quot;Greenville-Spartanburg International&quot;          19.3              -1  
- 26 &quot;General Mitchell Intl&quot;                         18.8               0  
- 27 &quot;Sacramento Intl&quot;                               18.7               2  
- 28 &quot;Chicago Midway Intl&quot;                           18.6               2  
- 29 &quot;Savannah Hilton Head Intl&quot;                     18.3              -1  
- 30 &quot;Bradley Intl&quot;                                  17.7              -1  
- 31 &quot;Montrose Regional Airport&quot;                     17.6               3  
- 32 &quot;Norfolk Intl&quot;                                  17.6              -2  
- 33 &quot;James M Cox Dayton Intl&quot;                       17.5              -2  
- 34 &quot;Yeager&quot;                                        17                -4  
- 35 &quot;Washington Dulles Intl&quot;                        17.0              -2  
- 36 &quot;Jacksonville Intl&quot;                             16.5              -1  
- 37 &quot;Portland Intl Jetport&quot;                         16.5              -2  
- 38 &quot;Louisville International Airport&quot;              16.4              -2  
- 39 &quot;Baltimore Washington Intl&quot;                     16.4              -2  
- 40 &quot;Portland Intl&quot;                                 16.3               1  
- 41 &quot;Greater Rochester Intl&quot;                        16.2              -2  
- 42 &quot;Lambert St Louis Intl&quot;                         16.0              -1  
- 43 &quot;Nashville Intl&quot;                                16.0              -1  
- 44 &quot;Myrtle Beach Intl&quot;                             15.8              -1  
- 45 &quot;Memphis Intl&quot;                                  15.7              -1  
- 46 &quot;Eagle Co Rgnl&quot;                                 15.5              -1  
- 47 &quot;Denver Intl&quot;                                   15.2               1  
- 48 &quot;Charleston Afb Intl&quot;                           14.7              -2  
- 49 &quot;Syracuse Hancock Intl&quot;                         14.4              -2  
- 50 &quot;William P Hobby&quot;                               14.3               0  
- 51 &quot;Louis Armstrong New Orleans Intl&quot;              14.2              -2  
- 52 &quot;Indianapolis Intl&quot;                             14.0              -2  
- 53 &quot;Albuquerque International Sunport&quot;             13.7               0  
- 54 &quot;Pittsburgh Intl&quot;                               13.7              -2  
- 55 &quot;Burlington Intl&quot;                               13.6              -2  
- 56 &quot;Chicago Ohare Intl&quot;                            13.6              -2  
- 57 &quot;Bob Hope&quot;                                      13.5              -1  
- 58 &quot;Buffalo Niagara Intl&quot;                          13.4              -2  
- 59 &quot;Cleveland Hopkins Intl&quot;                        13.4              -2  
- 60 &quot;Metropolitan Oakland Intl&quot;                     13.3               0  
- 61 &quot;Minneapolis St Paul Intl&quot;                      13.3              -2  
- 62 &quot;Austin Bergstrom Intl&quot;                         13.0              -1  
- 63 &quot;Palm Beach Intl&quot;                               13.0               0  
- 64 &quot;Ted Stevens Anchorage Intl&quot;                    12.9               3  
- 65 &quot;San Francisco Intl&quot;                            12.9               0  
- 66 &quot;Fort Lauderdale Hollywood Intl&quot;                12.7              -1  
- 67 &quot;Hartsfield Jackson Atlanta Intl&quot;               12.5              -2  
- 68 &quot;Raleigh Durham Intl&quot;                           12.4              -2  
- 69 &quot;Yampa Valley&quot;                                  12.3               6.5
- 70 &quot;Port Columbus Intl&quot;                            12.2              -3  
- 71 &quot;Tampa Intl&quot;                                    12.1              -1  
- 72 &quot;Philadelphia Intl&quot;                             12.0              -3  
- 73 &quot;Detroit Metro Wayne Co&quot;                        11.8              -3  
- 74 &quot;Gallatin Field&quot;                                11.5               0  
- 75 &quot;Orlando Intl&quot;                                  11.3              -1  
- 76 &quot;Long Beach&quot;                                    11.2              -1  
- 77 &quot;San Diego Intl&quot;                                11.1               0  
- 78 &quot;George Bush Intercontinental&quot;                  10.8               0  
- 79 &quot;Seattle Tacoma Intl&quot;                           10.7              -1  
- 80 &quot;Phoenix Sky Harbor Intl&quot;                       10.4              -1  
- 81 &quot;Ronald Reagan Washington Natl&quot;                 10.3              -3  
- 82 &quot;Norman Y Mineta San Jose Intl&quot;                 10.1              -1  
- 83 &quot;Mc Carran Intl&quot;                                 9.42             -1  
- 84 &quot;Los Angeles Intl&quot;                               9.40             -1  
- 85 &quot;Honolulu Intl&quot;                                  9.29             -1  
- 86 &quot;Charlotte Douglas Intl&quot;                         9.22             -3  
- 87 &quot;Salt Lake City Intl&quot;                            9.03             -1  
- 88 &quot;Miami Intl&quot;                                     8.88             -2  
- 89 &quot;General Edward Lawrence Logan Intl&quot;             8.73             -3  
- 90 &quot;Dallas Fort Worth Intl&quot;                         8.68             -3  
- 91 &quot;Southwest Florida Intl&quot;                         8.28             -2  
- 92 &quot;Asheville Regional Airport&quot;                     8.19             -3  
- 93 &quot;John Wayne Arpt Orange Co&quot;                      7.76             -1  
- 94 &quot;Sarasota Bradenton Intl&quot;                        7.26             -3  
- 95 &quot;Martha\\\\&#39;s Vineyard&quot;                          7.05             -2  
- 96 &quot;NW Arkansas Regional&quot;                           6.46             -5  
- 97 &quot;Nantucket Mem&quot;                                  6.46             -3  
- 98 &quot;Key West Intl&quot;                                  3.65              0  
- 99 &quot;Palm Springs Intl&quot;                             -2.94             -4  
-100 &quot;Blue Grass&quot;                                    -9                -9  </code></pre>
+    name                                   Mean_delay Median_delay
+    &lt;chr&gt;                                       &lt;dbl&gt;        &lt;dbl&gt;
+  1 &quot;Columbia Metropolitan&quot;                   41.8            28  
+  2 &quot;Tulsa Intl&quot;                              33.7            14  
+  3 &quot;Will Rogers World&quot;                       30.6            16  
+  4 &quot;Jackson Hole Airport&quot;                    28.1            15  
+  5 &quot;Mc Ghee Tyson&quot;                           24.1             2  
+  6 &quot;Dane Co Rgnl Truax Fld&quot;                  20.2             1  
+  7 &quot;Richmond Intl&quot;                           20.1             1  
+  8 &quot;Akron Canton Regional Airport&quot;           19.7             3  
+  9 &quot;Des Moines Intl&quot;                         19.0             0  
+ 10 &quot;Gerald R Ford Intl&quot;                      18.2             1  
+ 11 &quot;Birmingham Intl&quot;                         16.9            -2  
+ 12 &quot;Theodore Francis Green State&quot;            16.2             1  
+ 13 &quot;Greenville-Spartanburg International&quot;    15.9            -0.5
+ 14 &quot;Cincinnati Northern Kentucky Intl&quot;       15.4            -3  
+ 15 &quot;Savannah Hilton Head Intl&quot;               15.1            -1  
+ 16 &quot;Manchester Regional Airport&quot;             14.8            -3  
+ 17 &quot;Eppley Afld&quot;                             14.7            -2  
+ 18 &quot;Yeager&quot;                                  14.7            -1.5
+ 19 &quot;Kansas City Intl&quot;                        14.5             0  
+ 20 &quot;Albany Intl&quot;                             14.4            -4  
+ 21 &quot;General Mitchell Intl&quot;                   14.2             0  
+ 22 &quot;Piedmont Triad&quot;                          14.1            -2  
+ 23 &quot;Washington Dulles Intl&quot;                  13.9            -3  
+ 24 &quot;Cherry Capital Airport&quot;                  13.0           -10  
+ 25 &quot;James M Cox Dayton Intl&quot;                 12.7            -3  
+ 26 &quot;Louisville International Airport&quot;        12.7            -2  
+ 27 &quot;Chicago Midway Intl&quot;                     12.4            -1  
+ 28 &quot;Sacramento Intl&quot;                         12.1             4  
+ 29 &quot;Jacksonville Intl&quot;                       11.8            -2  
+ 30 &quot;Nashville Intl&quot;                          11.8            -2  
+ 31 &quot;Portland Intl Jetport&quot;                   11.7            -4  
+ 32 &quot;Greater Rochester Intl&quot;                  11.6            -5  
+ 33 &quot;Hartsfield Jackson Atlanta Intl&quot;         11.3            -1  
+ 34 &quot;Lambert St Louis Intl&quot;                   11.1            -3  
+ 35 &quot;Norfolk Intl&quot;                            10.9            -4  
+ 36 &quot;Baltimore Washington Intl&quot;               10.7            -5  
+ 37 &quot;Memphis Intl&quot;                            10.6            -2.5
+ 38 &quot;Port Columbus Intl&quot;                      10.6            -3  
+ 39 &quot;Charleston Afb Intl&quot;                     10.6            -4  
+ 40 &quot;Philadelphia Intl&quot;                       10.1            -3  
+ 41 &quot;Raleigh Durham Intl&quot;                     10.1            -3  
+ 42 &quot;Indianapolis Intl&quot;                        9.94           -3  
+ 43 &quot;Charlottesville-Albemarle&quot;                9.5            -5  
+ 44 &quot;Cleveland Hopkins Intl&quot;                   9.18           -5  
+ 45 &quot;Ronald Reagan Washington Natl&quot;            9.07           -2  
+ 46 &quot;Burlington Intl&quot;                          8.95           -4  
+ 47 &quot;Buffalo Niagara Intl&quot;                     8.95           -5  
+ 48 &quot;Syracuse Hancock Intl&quot;                    8.90           -5  
+ 49 &quot;Denver Intl&quot;                              8.61           -2  
+ 50 &quot;Palm Beach Intl&quot;                          8.56           -3  
+ 51 &quot;Bob Hope&quot;                                 8.18           -3  
+ 52 &quot;Fort Lauderdale Hollywood Intl&quot;           8.08           -3  
+ 53 &quot;Bangor Intl&quot;                              8.03           -9  
+ 54 &quot;Asheville Regional Airport&quot;               8.00           -1  
+ 55 &quot;Pittsburgh Intl&quot;                          7.68           -5  
+ 56 &quot;Gallatin Field&quot;                           7.6            -2  
+ 57 &quot;NW Arkansas Regional&quot;                     7.47           -2  
+ 58 &quot;Tampa Intl&quot;                               7.41           -4  
+ 59 &quot;Charlotte Douglas Intl&quot;                   7.36           -3  
+ 60 &quot;Minneapolis St Paul Intl&quot;                 7.27           -5  
+ 61 &quot;William P Hobby&quot;                          7.18           -4  
+ 62 &quot;Bradley Intl&quot;                             7.05          -10  
+ 63 &quot;San Antonio Intl&quot;                         6.95           -9  
+ 64 &quot;South Bend Rgnl&quot;                          6.5            -3.5
+ 65 &quot;Louis Armstrong New Orleans Intl&quot;         6.49           -6  
+ 66 &quot;Key West Intl&quot;                            6.35            7  
+ 67 &quot;Eagle Co Rgnl&quot;                            6.30           -4  
+ 68 &quot;Austin Bergstrom Intl&quot;                    6.02           -5  
+ 69 &quot;Chicago Ohare Intl&quot;                       5.88           -8  
+ 70 &quot;Orlando Intl&quot;                             5.45           -5  
+ 71 &quot;Detroit Metro Wayne Co&quot;                   5.43           -7  
+ 72 &quot;Portland Intl&quot;                            5.14           -5  
+ 73 &quot;Nantucket Mem&quot;                            4.85           -3  
+ 74 &quot;Wilmington Intl&quot;                          4.64           -7  
+ 75 &quot;Myrtle Beach Intl&quot;                        4.60          -13  
+ 76 &quot;Albuquerque International Sunport&quot;        4.38           -5.5
+ 77 &quot;George Bush Intercontinental&quot;             4.24           -5  
+ 78 &quot;Norman Y Mineta San Jose Intl&quot;            3.45           -7  
+ 79 &quot;Southwest Florida Intl&quot;                   3.24           -5  
+ 80 &quot;San Diego Intl&quot;                           3.14           -5  
+ 81 &quot;Sarasota Bradenton Intl&quot;                  3.08           -5  
+ 82 &quot;Metropolitan Oakland Intl&quot;                3.08           -9  
+ 83 &quot;General Edward Lawrence Logan Intl&quot;       2.91           -9  
+ 84 &quot;San Francisco Intl&quot;                       2.67           -8  
+ 85 &quot;Yampa Valley&quot;                             2.14            2  
+ 86 &quot;Phoenix Sky Harbor Intl&quot;                  2.10           -6  
+ 87 &quot;Montrose Regional Airport&quot;                1.79          -10.5
+ 88 &quot;Los Angeles Intl&quot;                         0.547          -7  
+ 89 &quot;Dallas Fort Worth Intl&quot;                   0.322          -9  
+ 90 &quot;Miami Intl&quot;                               0.299          -9  
+ 91 &quot;Mc Carran Intl&quot;                           0.258          -8  
+ 92 &quot;Salt Lake City Intl&quot;                      0.176          -8  
+ 93 &quot;Long Beach&quot;                              -0.0620        -10  
+ 94 &quot;Martha\\\\&#39;s Vineyard&quot;                   -0.286         -11  
+ 95 &quot;Seattle Tacoma Intl&quot;                     -1.10          -11  
+ 96 &quot;Honolulu Intl&quot;                           -1.37           -7  
+ 97 &quot;Ted Stevens Anchorage Intl&quot;              -2.5             1.5
+ 98 &quot;John Wayne Arpt Orange Co&quot;               -7.87          -11  
+ 99 &quot;Palm Springs Intl&quot;                      -12.7           -13.5
+100 &quot;Blue Grass&quot;                             -22             -22  </code></pre>
 </div>
 </div>
 </section>
@@ -3378,31 +3378,30 @@ return!"\t\n\x0B\f\r                　\u2028\u2029
 <details open>
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="co">#find the fastest speed model</span></span>
-<span id="cb8-2"><a href="#cb8-2"></a>fastest <span class="ot">&lt;-</span> planes <span class="sc">%&gt;%</span> </span>
-<span id="cb8-3"><a href="#cb8-3"></a>      <span class="fu">group_by</span>(model) <span class="sc">%&gt;%</span> </span>
-<span id="cb8-4"><a href="#cb8-4"></a>      <span class="fu">summarise</span>(</span>
-<span id="cb8-5"><a href="#cb8-5"></a>        <span class="at">avg_speed =</span> <span class="fu">mean</span>(speed, <span class="at">na.rm=</span><span class="cn">TRUE</span>)</span>
-<span id="cb8-6"><a href="#cb8-6"></a>      ) <span class="sc">%&gt;%</span> </span>
-<span id="cb8-7"><a href="#cb8-7"></a>      <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb8-8"><a href="#cb8-8"></a>      <span class="fu">arrange</span>(<span class="fu">desc</span>(avg_speed)) <span class="sc">%&gt;%</span> </span>
-<span id="cb8-9"><a href="#cb8-9"></a>      <span class="fu">slice</span>(<span class="dv">1</span>)</span>
-<span id="cb8-10"><a href="#cb8-10"></a></span>
-<span id="cb8-11"><a href="#cb8-11"></a><span class="co">#use fatest to filter</span></span>
-<span id="cb8-12"><a href="#cb8-12"></a>sym3 <span class="ot">&lt;-</span> flights <span class="sc">%&gt;%</span> </span>
-<span id="cb8-13"><a href="#cb8-13"></a>        <span class="fu">left_join</span>(planes, <span class="at">by=</span><span class="fu">c</span>(<span class="st">&quot;tailnum&quot;</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb8-14"><a href="#cb8-14"></a>        <span class="fu">inner_join</span>(fastest, <span class="at">by=</span><span class="st">&quot;model&quot;</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb8-15"><a href="#cb8-15"></a>        <span class="fu">group_by</span>(model) <span class="sc">%&gt;%</span> </span>
-<span id="cb8-16"><a href="#cb8-16"></a>        <span class="fu">summarise</span>(</span>
-<span id="cb8-17"><a href="#cb8-17"></a>          <span class="at">avg_speed =</span> <span class="fu">max</span>(avg_speed),</span>
-<span id="cb8-18"><a href="#cb8-18"></a>          <span class="at">n =</span> <span class="fu">n</span>()</span>
-<span id="cb8-19"><a href="#cb8-19"></a>        ) <span class="sc">%&gt;%</span> </span>
-<span id="cb8-20"><a href="#cb8-20"></a>        <span class="fu">print</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb8-2"><a href="#cb8-2"></a><span class="co"># we should calculate the average speed manually, can&#39;t use the speed variable in table planes, since there are too many missing values in the column.</span></span>
+<span id="cb8-3"><a href="#cb8-3"></a><span class="co"># we use air time and distance in table flights to calculate average speed</span></span>
+<span id="cb8-4"><a href="#cb8-4"></a>fastest <span class="ot">&lt;-</span> flights <span class="sc">%&gt;%</span> </span>
+<span id="cb8-5"><a href="#cb8-5"></a>      <span class="fu">left_join</span>(planes, <span class="at">by=</span><span class="fu">c</span>(<span class="st">&quot;tailnum&quot;</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-6"><a href="#cb8-6"></a>      <span class="fu">select</span>(air_time, distance, model) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-7"><a href="#cb8-7"></a>      <span class="fu">na.omit</span>() <span class="sc">%&gt;%</span> <span class="co">#filter missing at first</span></span>
+<span id="cb8-8"><a href="#cb8-8"></a>      <span class="fu">group_by</span>(model) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-9"><a href="#cb8-9"></a>      <span class="fu">summarise</span>(</span>
+<span id="cb8-10"><a href="#cb8-10"></a>         <span class="at">air_time =</span> <span class="fu">sum</span>(air_time, <span class="at">na.rm=</span><span class="cn">TRUE</span>)<span class="sc">/</span><span class="dv">60</span>, <span class="co">#convert to hour</span></span>
+<span id="cb8-11"><a href="#cb8-11"></a>         <span class="at">distance =</span> <span class="fu">sum</span>(distance, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb8-12"><a href="#cb8-12"></a>         <span class="at">avg_speed =</span> distance<span class="sc">/</span>air_time,</span>
+<span id="cb8-13"><a href="#cb8-13"></a>         <span class="at">n =</span> <span class="fu">n</span>()</span>
+<span id="cb8-14"><a href="#cb8-14"></a>      ) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-15"><a href="#cb8-15"></a>      <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb8-16"><a href="#cb8-16"></a>      <span class="fu">arrange</span>(<span class="fu">desc</span>(avg_speed)) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-17"><a href="#cb8-17"></a>      <span class="fu">select</span>(model, avg_speed, n) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-18"><a href="#cb8-18"></a>      <span class="fu">print</span>(<span class="at">n=</span><span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 1 × 3
+<pre><code># A tibble: 127 × 3
   model   avg_speed     n
   &lt;chr&gt;       &lt;dbl&gt; &lt;int&gt;
-1 DC-9-51       432    91</code></pre>
+1 777-222      482.     4
+# ℹ 126 more rows</code></pre>
 </div>
 </div>
 </section>
