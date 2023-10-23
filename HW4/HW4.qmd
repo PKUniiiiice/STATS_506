@@ -165,7 +165,7 @@ try(get_temp("November", 1999, data =nnmaps, celsius = TRUE,
 ```
 
 ## Problem 3
-SAS results: <>
+SAS results: <https://github.com/PKUniiiiice/STATS_506/blob/main/HW4/hw4p3-result.html>.
 
 ### (a)
 ```sas
