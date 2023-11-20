@@ -1,5 +1,5 @@
 ---
-title: "STATS 506 HW4"
+title: "STATS 506 HW5"
 author: "Minxuan Chen"
 date: last-modified
 format:
@@ -23,519 +23,353 @@ code-line-numbers: true
 ---
 Github repo: <https://github.com/PKUniiiiice/STATS_506>
 
-## Problem 1 
-### (a)
-```{r , warning=FALSE}
-library(nycflights13)
+## Problem 1 - Plotting
+
+
+
+
+
+
+
+
+
+<!--
+nnmaps_v1 <- nnmaps %>%
+             group_by(month.year) %>%
+             summarise( "mean_{{temp_cels}}" := mean({{temp_cels}}, na.rm=TRUE),
+                       season = first(season)) %>%
+             #we have detected that n_distinct(season)==1 in advance
+             ungroup() %>%
+             arrange(as.Date(paste("01", month.year, sep = "-"),
+                             format = "%d-%b-%Y")) %>%
+             print()
+
+nnmaps_v3 <- nnmaps_v1 %>%
+             separate(month.year, into = c("month", "year"), sep = "-") %>%
+             mutate(year = as.numeric(year)) %>%
+             print()
+return (list(nnmaps_v1, nnmaps_v2, nnmaps_v3))
+
+p1 <- ggplot(nnmaps_v1, aes(x = factor(month.year, levels=month.year),
+                            y = mean_temp,
+                            group = season, color=season)) +
+      geom_line() +
+      geom_point() +
+      labs(title = "Mean Temperature Over Months",
+           x = "Month",
+           y = "Mean Temperature") +
+      scale_color_manual(values = c("Winter" = "blue", "Spring" = "green",
+                                    "Summer" = "orange", "Autumn" = "red"),
+                         limits = c("Spring", "Summer", "Autumn", "Winter")) +
+      scale_y_continuous(breaks = seq(-10, 35, by = 5), limits = c(-10, 30)) +
+      theme_minimal() + 
+      theme(plot.title = element_text(hjust = 0.5),
+            axis.text.x = element_text(angle = 90, hjust = 1))
+show(p1)
+
+p3 <- ggplot(nnmaps_v3, aes(x = factor(month, levels = month.abb), y = mean_temp,
+                      group = interaction(year, season), color=season,
+                      linetype=as.factor(year))) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Mean Temperature Over Months",
+       x = "Month",
+       y = "Mean Temperature") +
+  scale_color_manual(values = c("Winter" = "blue", "Spring" = "green",
+                                "Summer" = "orange", "Autumn" = "red"),
+                     limits = c("Spring", "Summer", "Autumn", "Winter")) +
+  scale_linetype_manual(name = "Year",
+                        values=c("solid", "dashed", "dotted", "dotdash")) + 
+  scale_y_continuous(breaks = seq(-10, 35, by = 5), limits = c(-10, 30)) +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5),)
+
+show(p3)
+
+-->
+
+```{r, message=FALSE}
 library(tidyverse)
-data("airlines","airports", "flights", "planes", "weather")
+library(ggplot2)
+# read data
+nnmaps <- read.csv("./chicago-nmmaps.csv")
+# get celsius temperature
+nnmaps$temp_cels <- (nnmaps$temp-32)*(5/9)
+
+# Convert 'month' column to a factor with ordered levels
+#create year-month column
+nnmaps$month.year <- paste(nnmaps$month, nnmaps$year, sep='-')
+
+# define a function, easier for part b       
+
+##' @title Function to get data for plotting
+##' @param temp_cels, name of the column to be averaged
+process.data <- function(temp_cels){
+nnmaps_v1 <- nnmaps %>%
+             group_by(month) %>%
+             summarise("mean_{{temp_cels}}" := mean({{temp_cels}}, na.rm=TRUE),
+                       season=first(season)) %>%
+             ungroup() %>%
+             arrange(as.Date(paste("01", month, "2000", sep = "-"),
+                             format = "%d-%b-%Y"))
+
+return(nnmaps_v1)
+}
+
+nnmaps_v1 <- process.data(temp_cels=temp_cels)
+
+p1 <- ggplot(nnmaps_v1, aes(x = factor(month, levels=month),
+                            y = mean_temp_cels,
+                            group = season, color=season)) +
+      geom_line() +
+      geom_point() +
+      labs(title = "Mean Temperature Over Months",
+           x = "Month",
+           y = "Mean Temperature") +
+      scale_color_manual(values = c("Winter" = "blue", "Spring" = "green",
+                                    "Summer" = "orange", "Autumn" = "red"),
+                         limits = c("Spring", "Summer", "Autumn", "Winter")) +
+      scale_y_continuous(breaks = seq(-10, 35, by = 5), limits = c(-10, 30)) +
+      theme_minimal() + 
+      theme(plot.title = element_text(hjust = 0.5))
+show(p1)
+```
+### (b)
+```{r}
+# use nnmaps_v2
+temp <- process.data(temp_cels)
+o3 <- process.data(o3)
+pm10 <- process.data(pm10)
+dewpoint <- process.data(dewpoint)
+
+combined <- temp %>%
+              left_join(o3, by=c('month', 'season')) %>% 
+              left_join(pm10, by=c('month', 'season')) %>%
+              left_join(dewpoint, by=c('month', 'season')) 
+
+pb <- ggplot(combined, aes(x = factor(month, levels=month), group = season)) +
+      geom_line(aes(y = mean_temp_cels, color = season, linetype = "Mean Temp")) +
+      geom_point(aes(y = mean_temp_cels, color = season)) +  
+      geom_line(aes(y = mean_o3, color = season, linetype = "Mean O3")) +
+      geom_point(aes(y = mean_o3, color = season)) +  
+      geom_line(aes(y = mean_pm10, color = season, linetype = "Mean PM10")) +
+      geom_point(aes(y = mean_pm10, color = season)) + 
+      geom_line(aes(y = mean_dewpoint, color = season, linetype = "Mean Dewpoint")) +
+      geom_point(aes(y = mean_dewpoint, color = season)) + 
+      scale_color_manual(values = c("Spring" = "green", "Summer" = "orange",
+                                    "Autumn" = "red", "Winter" = "blue")) +
+      scale_linetype_manual(values = c("Mean Temp" = "solid", "Mean O3" = "dashed",
+                                       "Mean PM10" = "dotted", "Mean Dewpoint" = "dotdash")) +
+      labs(title = "Monthly Trends",
+           y = "Mean Value",
+           x = "Month") +
+      theme_minimal() + 
+      scale_y_continuous(breaks = seq(-10,65, by = 5), limits = c(-10, 65)) +
+      theme_minimal() + 
+      theme(plot.title = element_text(hjust = 0.5),)
+show(pb)
+
+
 ```
 
-```{r p1aa}
-#left join flights and airports to get airport
-t1 <- left_join(flights, airports, by=join_by(`origin` == `faa`))
+It seems that PM10 has the least seasonal trend. Because it appears the flattest over the year, i.e. remaining stable throughout the seasons.
 
-#define a function at first
-delay_smy <- function(data, varb) {
-  data %>%
-    group_by(name) %>%
-    summarise(
-      Mean_delay = mean({{varb}}, na.rm = TRUE),
-      Median_delay = median({{varb}}, na.rm = TRUE)
-    ) %>%
-    ungroup()
+## Problem 2 - OOP Programming
+### (a)
+```{r}
+#| output: false
+setClass("poly",
+         representation(terms = "list"),
+         prototype(terms = list())
+)
+
+##' @title Constructor
+##' 
+##' @param coef A coef vector
+##' @param coef A power vector
+##' @return A `poly` object
+poly <- function(coef, exp) {
+  if (length(coef) != length(exp)) {
+    stop("Number of coefficients and exponents must be equal.")
+  }
+  terms <- list()
+  for (i in 1:length(coef)){
+    if (coef[i]==0) next
+    terms[[as.character(exp[i])]] <- coef[i]
+  }
+  return(new("poly", terms = terms))
 }
-#Generate a table (which can just be a nicely printed tibble) reporting the mean and median departure delay per airport.
-smy1 <- flights %>% 
-        left_join(airports, by=c("origin" = "faa")) %>% 
-        delay_smy(varb=`dep_delay`) %>% 
-        arrange(desc(Mean_delay)) %>% 
-        na.omit() %>% 
-        print(n = Inf)
 
-#Generate a second table (which again can be a nicely printed tibble) reporting the mean and median arrival delay per airport.
-#we use filter to exclude
-smy2 <- flights %>% 
-        left_join(airports, by=c("dest" = "faa")) %>% 
-        delay_smy(varb=`arr_delay`) %>% 
-        filter(n()>=10) %>% 
-        arrange(desc(Mean_delay)) %>% 
-        na.omit() %>% 
-        print(n = Inf)
+##' @title Validator
+##' @param object A `ploy` object
+##' @return bool, valid or not
+setValidity("poly", function(object) {
+  numc <- as.numeric(names(object@terms))
+  intg <- as.integer(names(object@terms))
+  valid <- all(numc>=0) && all(numc==intg) 
+  # Check if exponents are positive integers
+  if (!valid) {
+    return("Exponents must be integers.")
+  }
+  return(TRUE)
+})
 
+##' @title Show Method
+##' @param object A `ploy` object
+setMethod("show", "poly", function(object) {
+  cvt <- function(coef, i){
+    ifelse((coef>0)&&(i>1), paste0('+',coef), coef)
+  }
+  terms <- object@terms
+  exp.all <- as.integer(names(terms))
+  coef.all <- unname(unlist(terms))
+  id <- order(-exp.all)
+  exp.all <- exp.all[id]
+  coef.all <- coef.all[id]
+  for (i in seq_along(terms)) {
+    coef <- coef.all[i]
+    exp <- exp.all[i]
+    
+    if (coef != 0) {
+      if (exp==0) {
+        cat(cvt(coef,i),
+            ifelse(i==length(exp.all), "\n", ''),
+            sep=' ')
+      } 
+      else if (exp==1) {
+        cat(paste0(cvt(coef,i), "x"),
+            ifelse(i== length(exp.all), "\n", ''),
+            sep=' ')
+      }
+      else {
+        cat(paste0(cvt(coef,i),"x^",exp),
+            ifelse(i== length(terms$coef), "\n", ''),
+            sep=' ')
+      }
+    }
+  }
+  return(invisible(object))
+})
+
+setGeneric("get.coef",
+           function(object, key) {
+             standardGeneric("get.coef")
+           })
+##' @title poly get coef
+##'
+##' @param object A `poly`
+##' @param numeric key
+##' @return A numeric
+setMethod("get.coef", "poly", function(object, key){
+  key <- as.character(key)
+  if (key %in% names(object@terms)) {
+    return(object@terms[[key]])
+  } 
+  else {
+    return(0)
+  }
+})
+
+##' @title poly addition
+##'
+##' @param e1 A `poly`
+##' @param e2 A `poly`
+##' @return A `poly`
+setMethod("+", signature("poly", "poly"), function(e1, e2) {
+  validObject(e1)
+  validObject(e2)
+  exp.max <- max(as.integer(c(names(e1@terms), names(e2@terms))))
+  out <- list()
+  for (i in 0:exp.max){
+    coef.sum <- get.coef(e1, i) + get.coef(e2, i)
+    if (all.equal(coef.sum, 0)==TRUE) next
+    out[[as.character(i)]] <- coef.sum
+  }
+  out <- new("poly", terms = out)
+  validObject(out)
+  return(out)
+})
+
+# Negative method
+setMethod("-", signature(e1 = "poly"), function(e1, e2) {
+  for (i in names(e1@terms)){
+    e1@terms[[i]] <- -e1@terms[[i]]
+  }
+  return(e1)
+})
+
+# Subtraction method
+setMethod("-", signature("poly", "poly"), function(e1, e2) {
+  e2 <- -e2
+  return(e1+e2)
+})
 ```
 
 ### (b)
+```{r}
+# Example usage:
+p1 <- poly(coef=c(3, 2), exp=c(2, 0))
+p2 <- poly(coef=c(7, 2, 1, 17), exp=c(3, 2, 1, 0))
 
-```{r p1b}
+p1
+p2
+p1 + p2
+p1 - p2
+```
+
+## Problem 3 - data.table
+### (a)
+```{r, message=FALSE}
+library(nycflights13)
+data("airlines","airports", "flights", "planes", "weather")
+library(data.table)
+
+# Convert data frames to data tables
+setDT(flights)
+setDT(airports)
+
+# Define a function to get mean delay median delay and n_count
+delay_smy <- function(data, varb) {
+  data[, .(Mean_delay = mean(get(varb), na.rm = TRUE),
+           Median_delay = median(get(varb), na.rm = TRUE),
+           n=.N)]
+}
+
+# Generate a table reporting mean and median departure delay per airport
+smy1 <- na.omit(flights[airports,
+                on = .(origin = faa), nomatch = 0L][,
+                delay_smy(.SD, varb = "dep_delay"),
+                by = name][
+                order(-Mean_delay)][,
+                .SD, .SDcols = -"n"])
+print(smy1, n=Inf)
+# Generate a second table reporting mean and median arrival delay per airport
+smy2 <- na.omit(flights[airports,
+                on = .(dest=faa), nomatch=0L][,
+                delay_smy(.SD, varb="arr_delay"),
+                by=name][n>=10][
+                order(-Mean_delay)][,
+                .SD, .SDcols = -"n"])
+print(smy2, n = Inf)
+```
+
+### (b)
+```{r}
 #find the fastest speed model
 # we should calculate the average speed manually, can't use the speed variable in table planes, since there are too many missing values in the column.
 # we use air time and distance in table flights to calculate average speed
-fastest <- flights %>% 
-      left_join(planes, by=c("tailnum")) %>% 
-      select(air_time, distance, model) %>% 
-      na.omit() %>% #filter missing at first
-      group_by(model) %>% 
-      summarise(
-         air_time = sum(air_time, na.rm=TRUE)/60, #convert to hour
-         distance = sum(distance, na.rm=TRUE),
-         avg_speed = distance/air_time,
-         n = n()
-      ) %>% 
-      ungroup() %>% 
-      arrange(desc(avg_speed)) %>% 
-      select(model, avg_speed, n) %>% 
-      print(n=1)
-
+setDT(planes)
+fastest <- na.omit(flights[planes, #filter missing at first
+          on = .(tailnum=tailnum), nomatch=0L][,
+                .(air_time, distance, model)])[,
+          .(air_time = sum(air_time, na.rm=TRUE)/60, 
+            #convert to hour
+            distance = sum(distance, na.rm=TRUE),
+            avg_speed = sum(distance, na.rm=TRUE) / sum(air_time, na.rm=TRUE) * 60,
+            n = .N), by=model][
+            order(-avg_speed)][,
+            .(model, avg_speed, n)
+            ]
+print(fastest[1,])
 ```
-
-## Problem 2 
-```{r p2}
-nnmaps <- read.csv("./chicago-nmmaps-custom.csv", header=TRUE) %>% tibble()
-
-#' Allows a user to request the average temperature for a given month.
-#' 
-#' @param month Month, either a numeric 1-12 or a string.
-#' @param year A numeric year.
-#' @param data The data set to obtain data from.
-#' @param celsius Logically indicating whether the results should be in celsius. Default FALSE.
-#' @param average_fn A function with which to compute the mean. Default is mean.
-get_temp <- function(month, year, data, celsius=FALSE, average_fn=mean){
-
-  #check input -- month
-  if ( !(is.character(month) || is.numeric(month) ) )
-    stop("Month should be a valid string (e.g., 'Jan') or a numeric value (1-12).")
-  else if (is.character(month)){
-    if (is.na( mat <- match(month, c(month.abb, month.name))))
-        stop("Month should be a valid string (e.g., 'Jan') or a numeric value (1-12).")
-    else
-      month.clr <- ifelse(mat<13, mat, mat-12)
-  }
-  else{
-    if( !(month.clr <-month) %in% seq(1, 12))
-      stop("Month should be a valid string (e.g., 'Jan') or a numeric value (1-12).")
-  }
-
-  #check input -- year
-  if ( ! (is.numeric(year) && (year>0) && (year%%1==0)))
-    stop("Year, must a positive numeric (integer) value.")
-  year.clr <- as.integer(year)
-  
-  #check input -- data
-  if (!is.data.frame(data))
-    stop("data, must be a data.frame or tibble.")
-  
-  #check input -- celsius
-  if (!is.logical(celsius))
-    stop("data, must be TRUE or FALSE")
-  
-  if (!is.function(average_fn))
-    stop("average_fn, must be a function")
-
-  out <- data %>% 
-         filter(month==month.abb[month.clr],
-                year==year.clr) %>% 
-         summarise(
-           temp = average_fn(temp)
-         ) %>% 
-         mutate(
-           celsius.avg = (temp-32)/1.8
-         ) %>% 
-         select(ifelse(celsius, 2, 1)) %>% 
-         pull()
-  if (is.na(out))
-    stop("Average temperature is NaN. 2 common reasons are
-         1. The requested data is missing in the dataset.
-         2. There may be an issue with the customed average function.")
-  return (out)
-}
-
-#test
-try(get_temp("Apr", 1999, data = nnmaps))
-try(get_temp("Apr", 1999, data = nnmaps, celsius = TRUE))
-try(get_temp(10, 1998, data = nnmaps, average_fn = median))
-try(get_temp(13, 1998, data = nnmaps))
-try(get_temp(2, 2005, data = nnmaps))
-try(get_temp("November", 1999, data =nnmaps, celsius = TRUE,
-         average_fn = function(x) {
-           x %>% sort -> x
-           x[2:(length(x) - 1)] %>% mean %>% return
-         }))
-```
-
-## Problem 3
-SAS results: <https://github.com/PKUniiiiice/STATS_506/blob/main/HW4/hw4p3-result.html>.
-
-### (a)
-```sas
-options locale = EN_US;
-/* we use the file my_shared_file_links/jbhender0/input_data/recs2020_public_v5.sas7bdat*/
-
-/* data library for reading/writing data: ---------------------------------- */
-%let out_path = ~/hw4/output_data;
-libname out_lib "&out_path.";
-
-data recs2020;
-	set "/home/u63640224/my_shared_file_links/jbhender0/input_data/recs2020_public_v5.sas7bdat";
-run;
-
-/* We use nweight as sampling weight */
-proc summary data=recs2020;
-  class state_name;
-  output out=out_lib.records_by_state
-         sum(nweight) = num;
-run;
-
-/* calculate percentage */
-proc sql;
-	create table out_lib.records_percentage as
-	select state_name,
-		   num,
-		   num / sum(num) * 100 as percentage
-	from out_lib.records_by_state
-	where _type_ = 1
-	order by percentage desc;
-quit;
-
-/* get highest percentage */
-proc print data=out_lib.records_percentage (obs=1);
-run;
-
-/* get michigan percentage */
-proc sql;
-	select *
-	from out_lib.records_percentage
-	where state_name="Michigan";
-quit;
-
-```
-From the result, California has the highest percentage of records (10.67\%). Michigan's percentage is 3.17\%.
-
-### (b)
-```sas
-/* we use DOLLAREL to calculate total electricity cost */
-proc sql;
-  create table PositiveCost as
-  select DOLLAREL, log(DOLLAREL) as logDOLLAREL
-  from recs2020
-  where DOLLAREL > 0;
-quit;
-
-proc sgplot data=PositiveCost;
-  histogram DOLLAREL / binwidth=200 legendlabel="Total Electricity Cost (Dollars)";
-  xaxis label="Total Electricity Cost (Dollars)";
-  yaxis label="Frequency";
-run;
-```
-
-### (c)
-```sas
-proc sgplot data=PositiveCost;
-  histogram logDOLLAREL / binwidth=0.2 legendlabel="Log of Total Electricity Cost (Dollars)";
-  xaxis label="Log of Total Electricity Cost (Dollars)";
-  yaxis label="Frequency";
-run;
-
-```
-
-### (d)
-```sas
-/* we use total number of rooms (TOTROOMS)
-		+ number full bathrooms (NCOMBATH)
-	    + number of half bathrooms (NHAFBATH)
-        as number of rooms in the house,
-   we use PRKGPLC1 to reprsent whether the house has a garage
-   we delete all missing values.
-   we use nweight as sampling weight  
-   we use DOLLAREL to calculate total electricity cost */
-   
-/* create data set */
-
-proc sql;
-  create table out_lib.regress_elec as
-  select TOTROOMS,
-  		 NCOMBATH,
-  		 NHAFBATH,
-  		 PRKGPLC1,
-  		 NWEIGHT,
-  		 log(DOLLAREL) as logDOLLAREL
-  from recs2020
-  where PRKGPLC1 <> -2; /* missing value of garage */
-quit;
-
-/* drop missing value of other variables */
-data out_lib.regress_elec;
-  set out_lib.regress_elec;
-  if cmiss(of _all_) then delete;
-run;
-
-/* get total rooms */
-data out_lib.regress_elec;
-  set out_lib.regress_elec;
-  num_rooms = TOTROOMS+NCOMBATH+NHAFBATH;
-run;
-
-/*regression*/
-proc reg data=out_lib.regress_elec;
-  model logDOLLAREL = num_rooms PRKGPLC1;
-  output out=pred predicted=p;
-  weight NWEIGHT;
-run;
-
-/* just try
-proc glm data=out_lib.regress_elec;
-  class PRKGPLC1;
-  model logDOLLAREL = num_rooms PRKGPLC1;
-  weight NWEIGHT;
-run;
-*/
-```
-
-### (e)
-```sas
-/*create a new dataset with actual and predicted values */
-data pred;
-  set pred;
-  Actual_DOLLAREL = exp(logDOLLAREL); /* convert back to the original scale */
-  Pred_DOLLAREL = exp(p);
-run;
-
-/* create a scatterplot of predicted vs. actual values */
-proc sgplot data=pred;
-  scatter x=Actual_DOLLAREL y=Pred_DOLLAREL;
-  xaxis label="Actual Total Electricity Cost (Dollars)";
-  yaxis label="Predicted Total Electricity Cost (Dollars)";
-run;
-```
-
-
-## Problem 4
-### (a)
-This codebook was generated by Stata, as it utilizes data types such as "byte," "int," and "long" to represent various levels of integer precision. Furthermore, by directly referring to <https://www.stata.com/manuals/dcodebook.pdf>, you can confirm that the format aligns with the SHED codebook.
-
-### (b) and (c)
-```sas
-/* We use
-B3: Compared to 12 months ago, would you say that you (and your family) are better off, the same, or worse off financially?
-ND2: Five years from now, do you think that the chance that you will experience a natural disaster or severe weather event will be higher, lower or about the same as it is now?
-B7_b: In this country -How would you rate economic conditions today
-GH1: This section will ask some questions about your home and your car. Do you (and/or your spouse or partner) (require modify)
-ppeducat: Education (4 Categories)
-ppethm 	Race / Ethnicity 
-Moreover, we need weight for this survey
-	Weight_pop is most commonly used and includes the weights used for the "Economic Well-Being of U.S. Households in 2022." 
-	These weights allow for the entire sample to reflect the observable characteristics of the U.S. adult population. 
-	They are scaled to add up to the total population of the U.S. adults eligible for this survey.
-So we use weight_pop
-And we need CaseID
-*/
-%let out_path = ~/hw4/output_data;
-libname out_lib "&out_path.";
-
-data public2022;
-	set "/home/u63640224/hw4/public2022.sas7bdat";
-run;
-
-proc sql;
-	create table out_lib.variables_req as 
-	select CaseID, /*no nan*/
-		   B3 as family_finan,  /*no nan*/
-		   ND2 as nature_disa,  /*no nan*/
-		   B7_b as econ_cond,   /*no nan*/
-		   case 
-		   		when GH1=1 or GH1=2 then 1 /*own*/
-		   		when GH1=3 then 2 /*pay rent*/
-		   		else 3 /*neither*/  
-		   		end as home_have,   /*no nan*/
-		   ppeducat as education, /*no nan*/
-		   ppethm as race, /*no nan*/
-		   weight_pop as weight /*no nan*/
-		   from public2022;
-quit;
-
-/* Now, for (c), downloading the file "out_lib.variables_req" is enough. */
-```
-
-### (d)
-```stata
-. // load data to stata
-. clear
-
-. import sas CaseID family_finan nature_disa econ_cond home_have education race weight using "K:\STATS_506\
-> STATA\variables_req.sas7bdat"
-(8 vars, 11,667 obs)
-
-. 
-. describe
-
-Contains data
- Observations:        11,667                  
-    Variables:             8                  
------------------------------------------------------------------------------------------------------------
-Variable      Storage   Display    Value
-    name         type    format    label      Variable label
------------------------------------------------------------------------------------------------------------
-CaseID          int     %10.0g                CaseID 2022
-family_finan    byte    %10.0g                Compared to 12 months ago, would you say that you (and your
-                                                family) are better o
-nature_disa     byte    %10.0g                Five years from now, do you think that the chance that you
-                                                will experience a nat
-econ_cond       byte    %10.0g                In this country - How would you rate economic conditions
-                                                today:
-home_have       byte    %10.0g                
-education       byte    %10.0g                Education (4 Categories)
-race            byte    %10.0g                Race / Ethnicity
-weight          double  %10.0g                Post-stratification weight - Main qualified respondents
-                                                scaled to U.S. populatio
------------------------------------------------------------------------------------------------------------
-Sorted by: 
-     Note: Dataset has changed since last saved.
-```
-
-### (e)
-```stata
-. 
-. //B3 has 5 levels, 1 and 2 are worse off --- convert to 0
-. //3,4,5 are the same or better off --- convert to 1
-. recode family_finan (1/2=0) (3/5=1), gen(family_finan_bin)
-(11,667 differences between family_finan and family_finan_bin)
-
-. 
-. 
-
-```
-### (f)
-We calculate both coefficients and odds ratios for the logistic regression model.
-```stata
-. //question f
-. svyset CaseID [pw=weight]
-
-Sampling weights: weight
-             VCE: linearized
-     Single unit: missing
-        Strata 1: <one>
- Sampling unit 1: CaseID
-           FPC 1: <zero>
-
-. 
-. //f cond
-. // nature_disa is natural ordered -- small value -- higher chance
-. // note that econ_cond is natural ordered large value -- good condition
-. // home_have is nominal categorical
-. // education is natural oreder, large value -- high education level
-. // race is nominal
-. svy: logistic family_finan_bin nature_disa econ_cond i.home_have education i.race
-(running logistic on estimation sample)
-
-Survey: Logistic regression
-
-Number of strata =      1                        Number of obs   =      11,667
-Number of PSUs   = 11,667                        Population size = 255,114,223
-                                                 Design df       =      11,666
-                                                 F(9, 11658)     =       94.24
-                                                 Prob > F        =      0.0000
-
-----------------------------------------------------------------------------------
-                 |             Linearized
-family_finan_bin | Odds ratio   std. err.      t    P>|t|     [95% conf. interval]
------------------+----------------------------------------------------------------
-     nature_disa |   1.033374   .0315333     1.08   0.282     .9733756    1.097071
-       econ_cond |   2.650293   .0966773    26.72   0.000     2.467406    2.846736
-                 |
-       home_have |
-              2  |   1.053186   .0572268     0.95   0.340     .9467788    1.171552
-              3  |    1.45047   .1405322     3.84   0.000      1.19958    1.753831
-                 |
-       education |    1.09333   .0267164     3.65   0.000     1.042195    1.146973
-                 |
-            race |
-              2  |   2.041822   .1646132     8.85   0.000     1.743357    2.391385
-              3  |   1.437889   .1698341     3.07   0.002     1.140713    1.812484
-              4  |   1.181915   .0838862     2.35   0.019      1.02841    1.358334
-              5  |   .9095113   .1236092    -0.70   0.485     .6968056    1.187147
-                 |
-           _cons |   .2050857   .0276544   -11.75   0.000     .1574507    .2671321
-----------------------------------------------------------------------------------
-Note: _cons estimates baseline odds.
-
-. 
-. 
-. svy: logit family_finan_bin nature_disa econ_cond i.home_have education i.race
-(running logit on estimation sample)
-
-Survey: Logistic regression
-
-Number of strata =      1                        Number of obs   =      11,667
-Number of PSUs   = 11,667                        Population size = 255,114,223
-                                                 Design df       =      11,666
-                                                 F(9, 11658)     =       94.24
-                                                 Prob > F        =      0.0000
-
-----------------------------------------------------------------------------------
-                 |             Linearized
-family_finan_bin | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
------------------+----------------------------------------------------------------
-     nature_disa |   .0328291   .0305149     1.08   0.282    -.0269852    .0926435
-       econ_cond |   .9746702    .036478    26.72   0.000     .9031672    1.046173
-                 |
-       home_have |
-              2  |   .0518196   .0543369     0.95   0.340    -.0546898     .158329
-              3  |   .3718874   .0968874     3.84   0.000     .1819719    .5618028
-                 |
-       education |   .0892277   .0244358     3.65   0.000     .0413294    .1371259
-                 |
-            race |
-              2  |   .7138425   .0806207     8.85   0.000     .5558123    .8718726
-              3  |   .3631758   .1181135     3.07   0.002     .1316536    .5946981
-              4  |   .1671364   .0709748     2.35   0.019      .028014    .3062588
-              5  |  -.0948479   .1359072    -0.70   0.485    -.3612488     .171553
-                 |
-           _cons |  -1.584327   .1348433   -11.75   0.000    -1.848643   -1.320012
-----------------------------------------------------------------------------------
-
-. //install outreg2
-. //ssc install outreg2
-. 
-. //extract model result
-. //outreg2 using "K:\STATS_506\STATA\model_results.csv", replace
-. 
-end of do-file
-
-```
-We found that when we control for economic conditions, home ownership, education, and race, the odds ratio for the respondent's belief of natural disasters is 1.033374. This value is only slightly higher than 1, which means that a one-unit increase (indicating a lower belief of experiencing a natural disaster) is associated with a slight increase in the odds of their family being in a better financial condition (multiplied by 1.033). In other words, if the respondent believes the chance of a natural disaster is lower, their family's financial situation is likely to be better.
-
-However, it's important to note that the p-value for `nature_disa` is 0.28, which is greater than the typical significance level of 0.05. This indicates that this coefficient is not statistically significant. Additionally, the odds ratio's magnitude is small. Therefore, we can conclude that it's **unlikely** that we can predict whether a respondent's family is financially better, the same, or worse off compared to 12 months ago based on their perception of the likelihood of future natural disasters. The statistical evidence does not support a significant relationship.
-
-
-### (g)
-```stata
-. //save coded version
-. save "K:\STATS_506\STATA\variables_req.dta"
-
-```
-
-### (h)
-```{r}
-library(haven)
-library(survey)
-stata_data <- read_stata("variables_req.dta")
-
-desg <- svydesign(id = ~ CaseID, weight = ~ weight, data = stata_data)
-
-m1 <- svyglm(family_finan_bin ~ nature_disa + econ_cond +
-                                as.factor(home_have) + education + 
-                                as.factor(race), design=desg, family=quasibinomial())
-summary(m1)
-
-psrsq(m1)
-```
-We observe that R gives the same fitting results as stata.
-
-The pseudo-$R^2$ is 0.1069493.
-
-
-
-
-
-
 

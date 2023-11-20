@@ -33,12 +33,14 @@ data("airlines","airports", "flights", "planes", "weather")
 
 ```{r p1aa}
 #left join flights and airports to get airport
-t1 <- left_join(flights, airports, by=join_by(`origin` == `faa`))
+t1 <- left_join(flights, airports,
+                by=join_by(`origin` == `faa`))
 
 #define a function at first
 delay_smy <- function(data, varb) {
   data %>%
     group_by(name) %>%
+    filter(n()>=10) %>%
     summarise(
       Mean_delay = mean({{varb}}, na.rm = TRUE),
       Median_delay = median({{varb}}, na.rm = TRUE)
@@ -58,7 +60,7 @@ smy1 <- flights %>%
 smy2 <- flights %>% 
         left_join(airports, by=c("dest" = "faa")) %>% 
         delay_smy(varb=`arr_delay`) %>% 
-        filter(n()>=10) %>% 
+        #filter(n()>=10) %>% 
         arrange(desc(Mean_delay)) %>% 
         na.omit() %>% 
         print(n = Inf)
