@@ -3175,14 +3175,18 @@ vertical-align: -.125em;
 <span id="cb5-29"><a href="#cb5-29"></a>sample_dest_one <span class="ot">&lt;-</span> <span class="cf">function</span>(idx, dest_names) {</span>
 <span id="cb5-30"><a href="#cb5-30"></a>  out <span class="ot">&lt;-</span> <span class="fu">mclapply</span>(dest_names, <span class="cf">function</span>(dest) <span class="fu">sample_dest</span>(dest))</span>
 <span id="cb5-31"><a href="#cb5-31"></a>  out.save <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, out)</span>
-<span id="cb5-32"><a href="#cb5-32"></a>  <span class="fu">saveRDS</span>(out.save,</span>
-<span id="cb5-33"><a href="#cb5-33"></a>          <span class="at">file=</span><span class="fu">paste0</span>(<span class="st">&#39;./samples/&#39;</span>, idx, <span class="st">&#39;_sample.rds&#39;</span>))</span>
-<span id="cb5-34"><a href="#cb5-34"></a>  <span class="fu">return</span>(<span class="dv">0</span>)</span>
-<span id="cb5-35"><a href="#cb5-35"></a>}</span>
-<span id="cb5-36"><a href="#cb5-36"></a><span class="co"># Second we parallel sampling all dataset</span></span>
-<span id="cb5-37"><a href="#cb5-37"></a><span class="fu">print</span>(<span class="fu">system.time</span>(<span class="fu">mclapply</span>(<span class="fu">as.list</span>(<span class="dv">1</span><span class="sc">:</span>S), </span>
-<span id="cb5-38"><a href="#cb5-38"></a>                     sample_dest_one,</span>
-<span id="cb5-39"><a href="#cb5-39"></a>                     <span class="at">dest_names=</span>dests)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-32"><a href="#cb5-32"></a> <span class="co"># We choose to save the samples locally</span></span>
+<span id="cb5-33"><a href="#cb5-33"></a> <span class="co"># since we encounter unknown errors,</span></span>
+<span id="cb5-34"><a href="#cb5-34"></a> <span class="co"># maybe crash of child process, if we just keep the whole</span></span>
+<span id="cb5-35"><a href="#cb5-35"></a> <span class="co"># boots sample in memory</span></span>
+<span id="cb5-36"><a href="#cb5-36"></a>  <span class="fu">saveRDS</span>(out.save,</span>
+<span id="cb5-37"><a href="#cb5-37"></a>          <span class="at">file=</span><span class="fu">paste0</span>(<span class="st">&#39;./samples/&#39;</span>, idx, <span class="st">&#39;_sample.rds&#39;</span>))</span>
+<span id="cb5-38"><a href="#cb5-38"></a>  <span class="fu">return</span>(<span class="dv">0</span>)</span>
+<span id="cb5-39"><a href="#cb5-39"></a>}</span>
+<span id="cb5-40"><a href="#cb5-40"></a><span class="co"># Second we parallel sampling all dataset</span></span>
+<span id="cb5-41"><a href="#cb5-41"></a><span class="fu">print</span>(<span class="fu">system.time</span>(<span class="fu">mclapply</span>(<span class="fu">as.list</span>(<span class="dv">1</span><span class="sc">:</span>S), </span>
+<span id="cb5-42"><a href="#cb5-42"></a>                     sample_dest_one,</span>
+<span id="cb5-43"><a href="#cb5-43"></a>                     <span class="at">dest_names=</span>dests)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>Result of running this code is</p>

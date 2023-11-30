@@ -104,6 +104,10 @@ dests <- unique(flights$dest)
 sample_dest_one <- function(idx, dest_names) {
   out <- mclapply(dest_names, function(dest) sample_dest(dest))
   out.save <- do.call(rbind, out)
+ # We choose to save the samples locally
+ # since we encounter unknown errors,
+ # maybe crash of child process, if we just keep the whole
+ # boots sample in memory
   saveRDS(out.save,
           file=paste0('./samples/', idx, '_sample.rds'))
   return(0)
