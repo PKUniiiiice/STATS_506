@@ -125,7 +125,7 @@ p1 <- ggplot(nnmaps_v1, aes(x = factor(month, levels=month),
       geom_point() +
       labs(title = "Mean Temperature Over Months",
            x = "Month",
-           y = "Mean Temperature") +
+           y = "Mean Temperature/°C") +
       scale_color_manual(values = c("Winter" = "blue", "Spring" = "green",
                                     "Summer" = "orange", "Autumn" = "red"),
                          limits = c("Spring", "Summer", "Autumn", "Winter")) +

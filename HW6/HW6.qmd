@@ -1,0 +1,231 @@
+---
+title: "STATS 506 HW6"
+author: "Minxuan Chen"
+date: last-modified
+format:
+  pdf:
+    toc: true
+    number-sections: true
+    colorlinks: true
+  html:
+    toc: true
+    fig-align: "center"
+    fig-width: 8
+    fig-height: 6
+    embed-resources: true
+    format-links: false
+    execute:
+      warning: true
+      freeze: auto
+code-fold: show
+code-overflow: scroll
+code-line-numbers: true
+---
+Github repo: <https://github.com/PKUniiiiice/STATS_506>
+
+## Problem 1
+```{r}
+library(nycflights13)
+library(tidyverse)
+data(flights)
+library(parallel)
+```
+
+```{r, eval=FALSE}
+# In this problem, we only care about dest, air_time, and origin,
+# so, we only keep these variables to save memory
+flights <- flights%>%select(dest, air_time, origin)
+#without parallel
+#sampling function
+#' Function to sample specific dest
+#' 
+#' @param dest_name specific dest
+#' @return a dataframe of sample
+sample_dest <- function(dest_name){
+  raw <- flights[flights$dest==dest_name, ]
+  size <- dim(raw)[1]
+  out <- raw %>% sample_n(size, replace=T)
+  return(out)
+}
+
+#bootstrapped samples
+S <- 20
+dests <- unique(flights$dest)
+boot.sample <- vector("list", length = S)
+#this function is just for time recording
+sample_dest_not_para <- function(){
+  for (i in 1:S){
+    out <- sample_dest(dests[1])
+    for (name in dests[2:length(dests)]){
+      out <- rbind(out, sample_dest(name))
+    }
+    boot.sample[[i]] <<- out
+  }
+}
+print(system.time(sample_dest_not_para()))
+saveRDS(boot.sample, file="./sample/boot_sample_notpara.rds")
+```
+Result of running this code is  
+
+|   user  | system | elapsed |
+|---------|--------|---------|
+| 1150.824  | 79.616 | 1257.089 |
+
+
+```{r, eval=FALSE}
+#with parallel processing -- parallel
+# This code is not run inside Rstudio, so here we just display it.
+library(parallel)
+library(nycflights13)
+library(tidyverse)
+data(flights)
+
+flights <- flights%>%select(dest, air_time, origin)
+#' Function to sample specific dest
+#' 
+#' @param dest_name specific dest
+#' @return a dataframe of sample
+sample_dest <- function(dest_name){
+  raw <- flights[flights$dest==dest_name, ]
+  size <- dim(raw)[1]
+  out <- raw %>% sample_n(size, replace=T)
+  return(out)
+}
+
+S <- 1000
+dests <- unique(flights$dest)
+# we use mclapply
+# First we parallel sampling single dataset
+
+#' Function to generate one bootstrapped sample
+#' 
+#' @param idx index
+#' @param dest_names dest names, list
+sample_dest_one <- function(idx, dest_names) {
+  out <- mclapply(dest_names, function(dest) sample_dest(dest))
+  out.save <- do.call(rbind, out)
+  saveRDS(out.save,
+          file=paste0('./samples/', idx, '_sample.rds'))
+  return(0)
+}
+# Second we parallel sampling all dataset
+print(system.time(mclapply(as.list(1:S), 
+                     sample_dest_one,
+                     dest_names=dests)))
+```
+
+Result of running this code is   
+
+|   user  | system | elapsed |
+|---------|--------|---------|
+| 32.750  | 19.321 | 288.754 |
+
+From above, we see that the parallel method is significantly (about 6 times) faster than the sequential for-loop.
+
+Now we perform analysis on the bootstrapped samples.
+
+First, for the for-loop.
+```{r}
+boot.sample.no.para <- readRDS("./samples/boot_sample_notpara.rds")
+
+#point estimate, use original data
+point.e <- flights%>%
+           group_by(origin) %>%
+           summarise(meantime=mean(air_time,na.rm = TRUE))%>%
+           ungroup()%>%arrange(origin)
+point.e <- setNames(point.e$meantime, point.e$origin)
+point.e
+  
+#' get point estimate of boot sample
+#' 
+#' @param boot bootstrapped sample
+#' @return a named vector
+point.e.boot <- function(boot){
+  point.e <- boot%>%
+             group_by(origin) %>%
+             summarise(meantime=mean(air_time,na.rm = TRUE))%>%
+             ungroup()%>%arrange(origin)
+  point.e <- setNames(point.e$meantime, point.e$origin)
+  return(point.e)
+}
+
+#calculate sd, parallel 
+point.es <- mclapply(boot.sample.no.para,
+                     point.e.boot)
+#convert to matrix
+point.es <- do.call(rbind, point.es)
+#get standard error
+boot.sd <- apply(point.es, 2, sd)
+boot.sd
+
+#confidence interval
+ci <- rbind(point.e-1.96*boot.sd, point.e+1.96*boot.sd)
+ci
+```
+
+Next, for the parallel samples
+```{r}
+#' read data and get point estimate of boot samples
+#' 
+#' @param idx index of sample
+#' @return a named vector
+point.e.boot.para <- function(idx){
+  boot <- readRDS(paste0('./samples/', idx, '_sample.rds'))
+  return(point.e.boot(boot))
+}
+
+#calculate sd, parallel 
+S <- 1000
+point.es.para <- mclapply(as.list(1:S),
+                     point.e.boot.para)
+#convert to matrix
+point.es.para <- do.call(rbind, point.es.para)
+#get standard error
+boot.sd.para <- apply(point.es.para, 2, sd)
+boot.sd.para
+
+#confidence interval
+ci.para <- rbind(point.e-1.96*boot.sd.para,
+                 point.e+1.96*boot.sd.para)
+ci.para
+```
+
+We can compare the confidence intervals given by these two methods.
+
+```{=html}
+<table border="1" cellspacing="0" cellpadding="5">
+  <caption>Results</caption>
+  <tr>
+    <th>Origin</th>
+    <th>Estimate</th>
+    <th colspan="2" style="text-align: center;">No Parallel</th>
+    <th colspan="2" style="text-align: center;">Parallel</th>
+  </tr>
+  <tr>
+    <td>EWR</td>
+    <td>153.3000</td>
+    <td>152.8979</td>
+    <td>153.7022</td>
+    <td>152.8824</td>
+    <td>153.7177</td>
+  </tr>
+  <tr>
+    <td>JFK</td>
+    <td>178.3490</td>
+    <td>177.8915</td>
+    <td>178.8066</td>
+    <td>177.8919</td>
+    <td>178.8062</td>
+  </tr>
+  <tr>
+    <td>LGA</td>
+    <td>117.8258</td>
+    <td>117.5856</td>
+    <td>118.0660</td>
+    <td>117.5945</td>
+    <td>118.0571</td>
+  </tr>
+</table>
+```
+
+The results of these two methods are very close. So we think we implement them correctly.
