@@ -6,3 +6,5 @@
 .DS_Store
 HW6/samples/
 HW5/*.csv
+final_proj/*.sqlite3
+final_proj/train2.txt

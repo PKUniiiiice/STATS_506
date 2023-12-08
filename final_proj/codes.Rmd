@@ -1,0 +1,332 @@
+```{r}
+library(xtable)
+library(ggplot2)
+library(cowplot)
+library(dplyr)
+library(tidyr)
+library(MASS)
+library(reshape2)
+library(Rgraphviz)
+library(bnlearn)
+#library(pcalg)
+library(dagitty)
+library(nnet)
+```
+
+```{r, data, eval}
+pubg <- tbl(dbplyr::src_dbi(DBI::dbConnect(RSQLite::SQLite(),
+                                           "./PUBG.sqlite3")), "PUBG")
+```
+
+```{r, data split}
+drop.cols.solo <- c("Id","groupId","matchId","assists","killPlace",
+                    "revives", "teamKills", "numGroups",
+                    "maxPlace", "matchType", "rankPoints")
+pubgsolo <- pubg %>% 
+            dplyr::filter(matchType=="solo" | matchType=="solo-fpp") %>%
+            dplyr::select(-all_of(drop.cols.solo)) %>% 
+            collect() %>% 
+            as.data.frame %>% 
+            type.convert(as.is=T) %>% 
+            drop_na() %>% 
+            dplyr::filter( killPoints!=0  & winPoints!=0 &
+                           walkDistance!=0 & rideDistance!=0 &
+                           swimDistance!=0) %>% 
+            dplyr::select(-DBNOs)
+```
+
+```{r, eda}
+discrt <- c("boosts", "headshotKills", "heals", "kills",    
+            "killStreaks","roadKills", "vehicleDestroys",
+            "weaponsAcquired")
+tmp <- pubgsolo %>% 
+       dplyr::select(all_of(discrt))
+p <- ggplot(tidyr::gather(tmp),aes(value)) +
+     geom_histogram(binwidth=1,fill="black", col="grey") +
+     facet_wrap(~key, scale='free')+
+     scale_x_continuous(breaks=seq(0,10), limits=c(-1,11))
+show(p)
+
+tmp <- pubgsolo %>% 
+       dplyr::select(damageDealt, longestKill, rideDistance,
+                     swimDistance, walkDistance)
+p <- ggplot(tidyr::gather(tmp),aes(value)) +
+     geom_histogram(aes(y=after_stat(density)),
+                    fill="cyan", color=1, bins=20) + 
+     geom_density(alpha=0.2,fill="#FF6666") +
+     facet_wrap(~key, scale='free')
+show(p)
+
+
+pubgsolo.count <- pubgsolo %>% 
+                  dplyr::select(all_of(c(discrt, 
+                                         "killPoints","winPoints" ))) %>% 
+                  tidyr::gather(name, varb) %>% 
+                  dplyr::group_by(name, varb) %>% 
+                  dplyr::count() %>% 
+                  dplyr::ungroup() %>% 
+                  tidyr::spread(name, n)
+
+pubgsolo <- pubgsolo %>%
+            mutate(log_damageDealt = log(damageDealt+1e-8),
+                   log_longestKill = log(longestKill+1e-8),
+                   log_rideDistance = log(rideDistance),
+                   log_swimDistance = log(swimDistance),
+                   log_walkDistance = log(walkDistance),
+                   log_winPlacePerc = -log(1+1e-8-winPlacePerc))
+
+tmp <- pubgsolo %>% 
+       dplyr::select(log_damageDealt, log_longestKill, 
+                     log_rideDistance,
+                     log_swimDistance, log_walkDistance,
+                     log_winPlacePerc, matchDuration) #%>% 
+       #plyr::filter(if_all(discrt, (\(x) x %in% (1:10))))
+p <- ggplot(tidyr::gather(tmp),aes(value)) +
+     geom_histogram(aes(y=after_stat(density)),
+                    fill="cyan", color=1, bins=20) + 
+     geom_density(alpha=0.2,fill="#FF6666") +
+     facet_wrap(~key, scale='free')#+
+     #scale_x_continuous(breaks=seq(0,10), limits=c(-1,11))
+show(p)
+
+tmp <- pubgsolo %>% 
+       dplyr::select(winPoints, killPoints)
+
+p <- ggplot(tidyr::gather(tmp),aes(value)) +
+     geom_histogram(bins=20,fill="black", col="grey") +
+     facet_wrap(~key, scale='free')
+show(p)
+```
+
+```{r, eda2, eval=FALSE}
+#data used
+pubgsolo.used <- pubgsolo[,-c(2,8,10,12,14,17)]
+cormat <- round(cor(pubgsolo.used), 2)
+
+get_upper_tri <- function(cormat){
+    cormat[lower.tri(cormat)]<- NA
+    return(cormat)
+}
+
+upper_tri <- get_upper_tri(cormat)
+# Melt the correlation matrix
+melted_cormat <- melt(upper_tri, na.rm = TRUE)
+
+# Create a ggheatmap
+ggheatmap <- ggplot(melted_cormat, 
+                    aes(Var2, Var1, fill = value)) +
+             geom_tile(color = "white")+
+             scale_fill_gradient2(low = "blue", high = "red", 
+                                  mid = "white", midpoint = 0,
+                                  limit = c(-1,1), space = "Lab",
+                                  name="Pearson\nCorrelation") +
+             theme_minimal()+ # minimal theme
+             theme(axis.text.x=element_text(angle=45, vjust = 1, 
+                                            size=12, hjust=1)) +
+             coord_fixed()
+
+p <- ggheatmap + 
+     geom_text(aes(Var2, Var1, label = value), 
+          color = "black", size = 2) +
+     theme(
+     axis.title.x = element_blank(),
+     axis.title.y = element_blank(),
+     panel.grid.major = element_blank(),
+     panel.border = element_blank(),
+     panel.background = element_blank(),
+     axis.ticks = element_blank(),
+     legend.justification = c(1, 0),
+     legend.position = c(0.6, 0.7),
+     legend.direction = "horizontal")+
+     guides(fill = guide_colorbar(barwidth = 7, barheight = 1,
+               title.position = "top", title.hjust = 0.5))
+show(p)
+```
+
+```{r, factorization}
+#todo
+levls <- list(seq(0,10), seq(0,7), seq(0,22), seq(0,10),
+              seq(0,2), seq(0,2), seq(0,2), seq(0,14))
+
+for (i in 1:8){
+  pubgsolo[, discrt[i]] <- factor(pubgsolo[,discrt[i]],
+                                       levels=levls[[i]],
+                                       ordered=T)
+}
+
+pubgsolo <- pubgsolo %>% drop_na()
+                 
+pubgsolo[,c(5,9,16)] <- base::lapply(pubgsolo[,c(5,9,16)],
+                                      as.numeric)
+
+pubgsolo.used <- pubgsolo[,-c(2,8,10,12,14,17)]
+```
+
+```{r, dag-struc1}
+dag <- hc(pubgsolo.used)
+par(mfrow=c(1,2))
+graphviz.compare(dag, cpdag(dag), shape="ellipse",
+                 main=c("DAG","Skeleton"))
+
+set.seed(987)
+dag2 <- hc(pubgsolo.used[, sample(17)])
+graphviz.compare(dag, dag2, shape="ellipse", 
+                 main=c("Original", "Permuted"))
+par(mfrow=c(1,1))
+```
+
+```{r, estimate-GPS}
+#prepare data -- use raw data (no log transform, etc)
+pubgsolo.used2 <- pubgsolo %>%
+                  dplyr::select(-starts_with("log"))
+
+covariate <- c("headshotKills", "damageDealt",
+               "winPoints", "killPoints", "boosts",
+               "walkDistance", "weaponsAcquired", "kills")
+
+id <- sample(nrow(pubgsolo.used2))
+train1 <- pubgsolo.used2 %>%
+          dplyr::select(all_of(covariate))
+          
+train <- train1[id[1:6000],]
+test <- train1[id[6001:6728],]
+
+eGPS <- multinom(kills~., data=train, maxit=2000)
+#summary(eGPS)
+
+training_pred <- predict(eGPS, train)
+test_pred <- predict(eGPS, test)
+sum(factor(train$kills, levels=seq(0,10), ordered=F)==training_pred)/nrow(train)
+sum(factor(test$kills, levels=seq(0,10), ordered=F)==test_pred)/nrow(test)
+```
+
+```{r, estimate-expection1}
+#retrain the multinorm model on full data
+eGPS <- multinom(kills~., data=train1, maxit=2000)
+#use probabilities
+probs <- predict(eGPS, train1, type="probs")
+#now we regard kills as integer, not factor
+kills.int <- as.numeric(levels(pubgsolo.used2$kills))[pubgsolo.used2$kills]
+#get predicted probability acrodding to real kills
+gps.hat <- probs[cbind(seq_len(nrow(probs)), kills.int+1)]
+
+beta <- lm(winPlacePerc~kills.int+gps.hat+
+                            I(kills.int*gps.hat)+
+                            I(kills.int^2)+I(gps.hat^2),
+                            #I(kills.int^3)+I(gps.hat^3),
+           data=pubgsolo.used2)
+summary(beta)
+#train2 <- cbind(kills.int, gps.hat, pubgsolo.used$log_winPlacePerc)
+#colnames(train2) <- c("kills.int", "gps.hat", "log_winPlacePerc")
+#beta <- neuralnet(log_winPlacePerc~kills.int+gps.hat,
+#                  data=train2,
+#                  hidden=c(64,32,8), linear.output=T)
+#summary(beta)
+#
+#write.table(train2,file="train2.txt",row.names=FALSE)
+
+
+#fit.tree = rpart(log_winPlacePerc~kills.int+gps.hat,
+#data=pubgsolo.used, method="anova", cp=0.008)
+```
+
+```{r, estimate-average potential outcomes}
+#we predict beta for each unit at each kills level
+kill.vs.gps <- data.frame(unit=rep(seq(1,nrow(pubgsolo.used2)),
+                                   each=11),
+                          kills.int=rep(seq(0,10),
+                                    times=nrow(pubgsolo.used2)),
+                          gps.hat=as.vector(t(probs))
+                     )
+
+all.units.beta <- data.frame(
+              kills.int=rep(seq(0,10),times=nrow(pubgsolo.used2)),
+              ebeta=as.vector(predict(beta, newdata=kill.vs.gps))
+              ) 
+
+all.units.beta %>% 
+group_by(kills.int) %>%
+summarise_at(vars(ebeta), list(name = mean))
+
+pubgsolo.used2 %>% 
+group_by(kills) %>%
+summarise_at(vars(winPlacePerc), list(name = mean))
+```
+
+```{r, estimate2 walkdistance}
+covariate <- c("swimDistance","rideDistance","winPoints",
+               "killPoints", "matchDuration", "weaponsAcquired",
+               "boosts", "walkDistance")
+
+train2 <- pubgsolo.used2 %>%
+          dplyr::select(all_of(covariate)) %>% 
+          dplyr::mutate_all(type.convert, as.is=TRUE)
+
+#write.table(train2, file="train2.txt")
+
+#eGPS2 <- lm(as.formula(paste0("walkDistance~",
+#  paste0("poly(",colnames(train2)[-8],",2, raw=T)",
+#                       collapse="+"))),
+#                       data=train2)
+eGPS2 <- lm(as.formula(paste0("walkDistance~.+",
+  paste0("I(",colnames(train2)[-8],"^2)",
+                       collapse="+"))), data=train2)
+  #paste0("I(",colnames(train2)[-8],"^3)",
+  #                    collapse="+"))), data=train2)
+summary(eGPS2)
+
+#sigma hat
+sigma.hat <- sum(eGPS2$residuals^2)/eGPS2$df.residual
+#
+probs2 <- 1/sqrt(2*pi*sigma.hat)*
+          exp(-1/(2*sigma.hat)*eGPS2$residuals^2)
+
+data4beta <- data.frame(walkDistance=train2$walkDistance,
+                        gps.hat=probs2,
+                        winPlacePerc=pubgsolo.used2$winPlacePerc)
+#beta model
+beta2 <- lm(winPlacePerc~walkDistance+gps.hat+
+                            I(walkDistance*gps.hat)+
+                            I(walkDistance^2)+I(gps.hat^2),
+           data=data4beta)
+summary(beta2)
+
+#levels of walkdistance
+walk.level <- as.vector(quantile(train2$walkDistance, probs=seq(0.05,0.95,0.05)))
+
+#we predict beta for each unit at each walkdistance level
+#first we need to get gps.hat for each walkdistance level of each unit
+all.gps.hat <- data.frame(walkDistance=rep(walk.level,
+                                    times=nrow(pubgsolo.used2)),
+                       gps.hat=rep(eGPS2$fitted.values, each=19)) %>% 
+               dplyr::mutate(gps.hat=1/sqrt(2*pi*sigma.hat)*
+                             exp(-1/(2*sigma.hat)*(walkDistance-gps.hat)^2))
+
+#then we use all gps.hat and walk distance to estimate beta
+
+all.units.beta2 <- data.frame(
+              walkDistance=all.gps.hat$walkDistance,
+              ebeta=as.vector(predict(beta2, newdata=all.gps.hat))
+              ) 
+
+walkDistancs.vs.po <- all.units.beta2 %>% 
+                      group_by(walkDistance) %>%
+                      summarise_at(vars(ebeta), list(name = mean)) %>% 
+                      as.data.frame
+
+plot(walkDistancs.vs.po$walkDistance, walkDistancs.vs.po$name)
+
+
+p <- ggplot(data=walkDistancs.vs.po, aes(x=walkDistance, y=name)) +
+  geom_line(linetype="dashed", color="blue", linewidth=1)+
+  geom_point(color="red", size=3)+
+  labs(y="winPlacePerc", x = "walkDistance")+   
+  scale_x_continuous(limits=c(500,5500),breaks=seq(500, 5500, 500))+
+  scale_y_continuous(limits=c(0.55,0.9), breaks=seq(0.55, 1, 0.05))
+show(p)
+#for (i in walk.level){
+#  print(mean((pubgsolo.used2 %>% filter(abs(walkDistance-i)<=5))$winPlacePerc))
+#}
+```
+
+
